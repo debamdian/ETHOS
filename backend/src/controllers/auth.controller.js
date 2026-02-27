@@ -3,9 +3,7 @@ const crypto = require('crypto');
 const { signAccessToken, signRefreshToken } = require('../config/jwt');
 const userModel = require('../models/user.model');
 const generateAnonUsername = require('../utils/generateAnonUsername');
-const mockDataLoader = require('../utils/mockDataLoader');
 const { ApiError } = require('../middlewares/error.middleware');
-const { logAuditEvent } = require('../services/audit.service');
 
 const hrOtpChallenges = new Map();
 const HR_OTP_TTL_MS = 5 * 60 * 1000;
