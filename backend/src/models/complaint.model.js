@@ -111,15 +111,14 @@ async function findByReferenceForUser(reference, user) {
   return result.rows[0] || null;
 }
 
-async function updateStatusByHr(reference, status, rejectionType = null) {
+async function updateStatusByHr(reference, status) {
   const result = await query(
     `UPDATE complaints
      SET status = $2,
-         rejection_type = $3,
          updated_at = NOW()
      WHERE complaint_code = $1 OR id::text = $1
      RETURNING *`,
-    [reference, status, rejectionType]
+    [reference, status]
   );
 
   return result.rows[0] || null;

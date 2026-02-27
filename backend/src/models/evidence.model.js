@@ -30,19 +30,7 @@ async function listEvidenceForComplaint(complaintReference, user) {
   return result.rows;
 }
 
-async function countEvidenceByComplaintId(complaintId) {
-  const result = await query(
-    `SELECT COUNT(*)::int AS count
-     FROM evidence_files
-     WHERE complaint_id = $1`,
-    [complaintId]
-  );
-
-  return result.rows[0]?.count || 0;
-}
-
 module.exports = {
   createEvidence,
   listEvidenceForComplaint,
-  countEvidenceByComplaintId,
 };

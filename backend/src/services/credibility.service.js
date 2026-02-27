@@ -14,21 +14,6 @@ function scoreCredibility({ description = '', evidenceCount = 0, hasWitness = fa
   };
 }
 
-function calculateCredibilityDelta({ nextStatus, rejectionType = null, strongEvidence = false }) {
-  if (nextStatus === 'resolved') {
-    return strongEvidence ? 20 : 15;
-  }
-
-  if (nextStatus === 'rejected') {
-    if (rejectionType === 'insufficient') return -5;
-    if (rejectionType === 'false') return -15;
-    if (rejectionType === 'malicious') return -40;
-  }
-
-  return 0;
-}
-
 module.exports = {
   scoreCredibility,
-  calculateCredibilityDelta,
 };

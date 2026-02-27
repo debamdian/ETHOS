@@ -198,35 +198,6 @@ async function accusedBreakdown(req, res, next) {
   }
 }
 
-async function suspiciousClusters(req, res, next) {
-  try {
-    await auditPatternAccess(req, 'hr.pattern_detection.suspicious_clusters.view');
-    const limit = Math.min(Math.max(Number(req.query.limit) || 25, 1), 100);
-    const reviewStatus = req.query.review_status ? String(req.query.review_status) : null;
-    const data = await patternDetectionModel.getSuspiciousClusters({ limit, reviewStatus });
-    return res.json({ success: true, data });
-  } catch (err) {
-    if (isTransientDbError(err)) {
-      return res.json({ success: true, data: [], degraded: true });
-    }
-    return next(err);
-  }
-}
-
-async function accusedComplaints(req, res, next) {
-  try {
-    await auditPatternAccess(req, 'hr.pattern_detection.accused_complaints.view');
-    const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-    const data = await patternDetectionModel.getAccusedComplaints(req.params.accusedHash, limit);
-    return res.json({ success: true, data });
-  } catch (err) {
-    if (isTransientDbError(err)) {
-      return res.json({ success: true, data: [], degraded: true });
-    }
-    return next(err);
-  }
-}
-
 module.exports = {
   overview,
   repeatOffenders,
@@ -237,6 +208,4 @@ module.exports = {
   insights,
   riskAcceleration,
   accusedBreakdown,
-  suspiciousClusters,
-  accusedComplaints,
 };

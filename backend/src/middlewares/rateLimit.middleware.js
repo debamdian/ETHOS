@@ -23,16 +23,7 @@ function buildLimiter(limiter, keySelector) {
 }
 
 module.exports = {
-  authRateLimit: buildLimiter(
-    authLimiter,
-    (req) => `auth:${req.ipFingerprint || req.clientContext?.ipSubnet || 'unknown'}`
-  ),
-  complaintRateLimit: buildLimiter(
-    complaintLimiter,
-    (req) => `complaint:${req.user?.id || req.ipFingerprint || 'unknown'}`
-  ),
-  uploadRateLimit: buildLimiter(
-    uploadLimiter,
-    (req) => `upload:${req.user?.id || req.ipFingerprint || 'unknown'}`
-  ),
+  authRateLimit: buildLimiter(authLimiter, (req) => `auth:${req.ip}`),
+  complaintRateLimit: buildLimiter(complaintLimiter, (req) => `complaint:${req.user?.id || req.ip}`),
+  uploadRateLimit: buildLimiter(uploadLimiter, (req) => `upload:${req.user?.id || req.ip}`),
 };

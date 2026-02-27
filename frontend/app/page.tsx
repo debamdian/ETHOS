@@ -127,6 +127,9 @@ export default function LandingPage() {
                   Reports are processed in volatile memory environments and destroyed immediately after encryption.
                 </p>
               </div>
+Node.js v22.22.0
+[nodemon] app crashed - waiting for file changes before starting...
+^C
 
               <div className="p-12 text-left hover:bg-white/[0.03] transition-colors group cursor-default">
                 <div className="w-14 h-14 rounded-2xl bg-success/5 border border-success/10 flex items-center justify-center mb-10 group-hover:bg-success group-hover:text-white transition-all duration-300">

@@ -38,7 +38,6 @@ router.patch(
   requireRole('hr', 'committee', 'admin'),
   param('complaintId').isString().notEmpty(),
   body('status').isIn(['submitted', 'under_review', 'resolved', 'rejected']),
-  body('rejection_type').optional({ values: 'falsy' }).isIn(['insufficient', 'false', 'malicious']),
   validateRequest,
   complaintController.updateComplaintStatus
 );
