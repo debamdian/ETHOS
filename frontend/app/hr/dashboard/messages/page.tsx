@@ -44,6 +44,7 @@ type SocketAck<T> = {
 };
 
 type ConnectionStatus = "connecting" | "online" | "reconnecting" | "offline";
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
 function mapStatusLabel(status: ChatThreadSummary["complaint_status"]) {
   if (status === "under_review") return "Under Review";
@@ -98,6 +99,10 @@ function deriveSeenCutoff(messages: UiMessage[], seenMessageId: string | null) {
   const marker = messages.find((item) => item.id === seenMessageId);
   if (!marker) return null;
   return new Date(marker.timestamp).getTime();
+}
+
+function toAdjustedDate(isoDate: string) {
+  return new Date(new Date(isoDate).getTime() + IST_OFFSET_MS);
 }
 
 export default function HrMessagesPage() {
@@ -457,7 +462,7 @@ export default function HrMessagesPage() {
     const groups = new Map<string, UiMessage[]>();
 
     for (const message of messages) {
-      const date = new Date(message.timestamp).toLocaleDateString(undefined, {
+      const date = toAdjustedDate(message.timestamp).toLocaleDateString(undefined, {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -792,7 +797,7 @@ function MessageBubble({ message, isSeen }: { message: UiMessage; isSeen: boolea
         </p>
         <p>{message.content}</p>
         <p className={`mt-1 text-right text-[10px] ${isYou ? "text-slate-300" : "text-slate-500"}`}>
-          {new Date(message.timestamp).toLocaleTimeString(undefined, {
+          {toAdjustedDate(message.timestamp).toLocaleTimeString(undefined, {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
@@ -822,7 +827,7 @@ function StatusBadge({ status }: { status: ChatThreadSummary["complaint_status"]
 }
 
 function formatTimeAgo(isoDate: string) {
-  const diff = Date.now() - new Date(isoDate).getTime();
+  const diff = Date.now() - toAdjustedDate(isoDate).getTime();
   const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
