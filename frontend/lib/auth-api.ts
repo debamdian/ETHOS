@@ -1,75 +1,70 @@
-"use client";
+export type UserType = "user" | "hr";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import Cookies from "js-cookie";
-import { AuthUser } from "@/lib/auth-api";
-
-interface AuthContextType {
-    user: AuthUser | null;
-    loading: boolean;
-    login: (user: AuthUser, tokens: { accessToken: string; refreshToken: string }) => void;
-    logout: () => void;
-    isAuthenticated: boolean;
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  userType: UserType;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [loading, setLoading] = useState(true);
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
-    useEffect(() => {
-        const savedUser = Cookies.get("authUser");
-        const accessToken = Cookies.get("accessToken");
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name?: string;
+  userType?: UserType;
+}
 
-        if (!savedUser || !accessToken) {
-            setUser(null);
-            setLoading(false);
-            return;
-        }
+export interface AuthResponse {
+  user: AuthUser;
+  tokens: AuthTokens;
+}
 
-        try {
-            setUser(JSON.parse(savedUser) as AuthUser);
-        } catch {
-            console.error("Failed to parse authUser cookie");
-            Cookies.remove("accessToken");
-            Cookies.remove("refreshToken");
-            Cookies.remove("authUser");
-            setUser(null);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
 
-    const login = (userData: AuthUser, tokens: { accessToken: string; refreshToken: string }) => {
-        setUser(userData);
+async function requestJson<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
 
-        // Persist session in cookies
-        Cookies.set("accessToken", tokens.accessToken, { expires: 7 }); // expires in 7 days (or use JWT expiry)
-        Cookies.set("refreshToken", tokens.refreshToken, { expires: 30 });
-        Cookies.set("authUser", JSON.stringify(userData), { expires: 7 });
-    };
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed with status ${response.status}`);
+  }
 
-    const logout = () => {
-        const isHrUser = user?.userType === "hr";
-        setUser(null);
-        Cookies.remove("accessToken");
-        Cookies.remove("refreshToken");
-        Cookies.remove("authUser");
-        window.location.href = isHrUser ? "/hr/login" : "/auth/login";
-    };
+  return (await response.json()) as T;
+}
 
-    return (
-        <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
+export function login(payload: LoginRequest): Promise<AuthResponse> {
+  return requestJson<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
+export function register(payload: RegisterRequest): Promise<AuthResponse> {
+  return requestJson<AuthResponse>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
+  return requestJson<AuthTokens>("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
