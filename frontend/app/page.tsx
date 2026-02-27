@@ -2,9 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Shield, Lock, EyeOff, Scale, ChevronRight, CheckCircle2, MessageSquare, Zap, Fingerprint } from "lucide-react";
 import { ModernBackground } from "@/components/modern-background";
-import { Grainient } from "@/components/grainient";
 import { useAuth } from "@/components/auth/auth-context";
 
 export default function LandingPage() {
