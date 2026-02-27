@@ -3,7 +3,8 @@ require('dotenv').config();
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./app');
-
+const logger = require('./utils/logger');
+const { initChatSocket } = require('./socket/chat.socket');
 
 const PORT = Number(process.env.PORT || 5000);
 const clientOrigins = process.env.CLIENT_ORIGIN?.split(',') || ['http://localhost:3000'];
