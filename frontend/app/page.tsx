@@ -157,7 +157,7 @@ export default function LandingPage() {
                 <div className="mt-8 flex items-center gap-4">
                   <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full" />
                   <div>
-                    <p className="font-bold text-sm">Dr. Marcus Vance</p>
+                    <p className="font-bold text-sm">Mr. Rounak Ukey</p>
                     <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">Privacy Compliance Lead</p>
                   </div>
                 </div>
