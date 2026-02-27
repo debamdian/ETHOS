@@ -14,6 +14,10 @@ export function ThemeToggle() {
         setMounted(true);
     }, []);
 
+    if (!mounted) {
+        return <div className="fixed right-4 top-4 z-50 h-10 w-10 md:right-16" aria-hidden="true" />;
+    }
+
     const isHrDashboardRoute = pathname === "/hr/dashboard" || pathname.startsWith("/hr/dashboard/");
     const isEmployeeDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
