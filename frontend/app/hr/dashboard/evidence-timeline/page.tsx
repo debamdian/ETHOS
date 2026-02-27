@@ -220,6 +220,12 @@ export default function EvidenceTimelinePage() {
 
     complaints.forEach((complaint) => {
       const evidence = evidenceMap.get(complaint.complaint_code) || [];
+      const baseDescription =
+        typeof complaint.description === "string" && complaint.description.trim().length > 0
+          ? complaint.description
+          : "No description provided";
+      const shortDescription =
+        baseDescription.length > 100 ? `${baseDescription.substring(0, 100)}...` : baseDescription;
 
       // Add complaint event
       events.push({
@@ -228,9 +234,7 @@ export default function EvidenceTimelinePage() {
         type: "complaint",
         timestamp: complaint.created_at,
         title: `Case ${complaint.complaint_code}`,
-        description: complaint.description.length > 100 
-          ? `${complaint.description.substring(0, 100)}...` 
-          : complaint.description,
+        description: shortDescription,
         severity: complaint.severity_score,
         status: complaint.status,
         location: complaint.location || "Unspecified",
