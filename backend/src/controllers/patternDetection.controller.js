@@ -171,6 +171,19 @@ async function riskAcceleration(req, res, next) {
   }
 }
 
+async function accusedComplaints(req, res, next) {
+  try {
+    await auditPatternAccess(req, 'hr.pattern_detection.accused_complaints.view');
+    const data = await patternDetectionModel.getAccusedComplaints(req.params.accusedHash);
+    return res.json({ success: true, data });
+  } catch (err) {
+    if (isTransientDbError(err)) {
+      return res.json({ success: true, data: [], degraded: true });
+    }
+    return next(err);
+  }
+}
+
 async function accusedBreakdown(req, res, next) {
   try {
     await auditPatternAccess(req, 'hr.pattern_detection.accused_breakdown.view');
@@ -222,6 +235,7 @@ module.exports = {
   credibilityRisk,
   insights,
   riskAcceleration,
+  accusedComplaints,
   accusedBreakdown,
   suspiciousClusters,
 };

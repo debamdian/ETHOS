@@ -795,6 +795,45 @@ async function getAccusedBreakdown(accusedEmployeeHash) {
   };
 }
 
+async function getAccusedComplaints(accusedEmployeeHash) {
+  const result = await query(
+    `SELECT
+       c.id,
+       c.complaint_code,
+       c.accused_employee_hash,
+       c.status,
+       c.severity_score,
+       c.incident_date,
+       c.created_at,
+       c.updated_at,
+       COALESCE(v.verdict, NULL) AS verdict,
+       (
+         SELECT COUNT(*)::int
+         FROM evidence_files ef
+         WHERE ef.complaint_id = c.id
+       ) AS evidence_count
+     FROM complaints c
+     LEFT JOIN verdicts v
+       ON v.complaint_id = c.id
+     WHERE c.accused_employee_hash = $1
+     ORDER BY c.created_at DESC`,
+    [accusedEmployeeHash]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    complaint_code: row.complaint_code,
+    accused_employee_hash: row.accused_employee_hash,
+    status: row.status,
+    severity_score: toNumber(row.severity_score, 0),
+    incident_date: row.incident_date,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    verdict: row.verdict || null,
+    evidence_count: toNumber(row.evidence_count, 0),
+  }));
+}
+
 async function getSuspiciousClusters({ limit = 25, reviewStatus = null } = {}) {
   const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
   const safeStatus = reviewStatus ? String(reviewStatus).trim().toLowerCase() : null;
@@ -855,6 +894,7 @@ module.exports = {
   getRiskAcceleration,
   getOverview,
   getInsightsBundle,
+  getAccusedComplaints,
   getAccusedBreakdown,
   getSuspiciousClusters,
 };
