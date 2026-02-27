@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-const { query } = require('../config/db');
-=======
 const { query, sql } = require('../config/db');
 
 const ELIGIBLE_HR_ROLES = ['hr', 'committee', 'admin'];
->>>>>>> d0890d4 (Feature: HR Voting System)
 
 async function createComplaint(payload) {
   const result = await query(
@@ -50,8 +46,6 @@ async function listForHr() {
   return result.rows;
 }
 
-<<<<<<< HEAD
-=======
 async function listForHrQueue() {
   const result = await query(
     `SELECT
@@ -71,7 +65,6 @@ async function listForHrQueue() {
   return result.rows;
 }
 
->>>>>>> d0890d4 (Feature: HR Voting System)
 async function listForHrDepartmentRisk() {
   const result = await query(
     `SELECT location, severity_score
@@ -126,14 +119,6 @@ async function getHrDashboardSummary() {
   };
 }
 
-<<<<<<< HEAD
-async function findByReferenceForUser(reference, user) {
-  const isHr = ['hr', 'committee', 'admin'].includes(user.role);
-  const result = await query(
-    `SELECT * FROM complaints
-     WHERE (complaint_code = $1 OR id::text = $1)
-       AND ($2::boolean = true OR anon_user_id = $3)
-=======
 async function findByReference(reference) {
   const result = await query(
     `SELECT
@@ -173,7 +158,6 @@ async function findByReferenceForUser(reference, user) {
      LEFT JOIN hr_users hu ON hu.id = c.assigned_hr_id
      WHERE (c.complaint_code = $1 OR c.id::text = $1)
        AND ($2::boolean = true OR c.anon_user_id = $3)
->>>>>>> d0890d4 (Feature: HR Voting System)
      LIMIT 1`,
     [reference, isHr, user.id]
   );
@@ -181,16 +165,6 @@ async function findByReferenceForUser(reference, user) {
   return result.rows[0] || null;
 }
 
-<<<<<<< HEAD
-async function updateStatusByHr(reference, status) {
-  const result = await query(
-    `UPDATE complaints
-     SET status = $2,
-         updated_at = NOW()
-     WHERE complaint_code = $1 OR id::text = $1
-     RETURNING *`,
-    [reference, status]
-=======
 async function updateStatusByHr(reference, status, rejectionType = null) {
   const result = await query(
     `UPDATE complaints
@@ -407,7 +381,6 @@ async function findNotificationCase(reference, hrUserId) {
        AND c.assigned_hr_id <> $2
      LIMIT 1`,
     [reference, hrUserId]
->>>>>>> d0890d4 (Feature: HR Voting System)
   );
 
   return result.rows[0] || null;
@@ -417,12 +390,6 @@ module.exports = {
   createComplaint,
   listForReporter,
   listForHr,
-<<<<<<< HEAD
-  listForHrDepartmentRisk,
-  getHrDashboardSummary,
-  findByReferenceForUser,
-  updateStatusByHr,
-=======
   listForHrQueue,
   listForHrDepartmentRisk,
   getHrDashboardSummary,
@@ -434,5 +401,4 @@ module.exports = {
   castCommitteeVote,
   listCommitteeNotifications,
   findNotificationCase,
->>>>>>> d0890d4 (Feature: HR Voting System)
 };

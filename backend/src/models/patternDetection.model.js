@@ -795,8 +795,6 @@ async function getAccusedBreakdown(accusedEmployeeHash) {
   };
 }
 
-<<<<<<< HEAD
-=======
 async function getSuspiciousClusters({ limit = 25, reviewStatus = null } = {}) {
   const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
   const safeStatus = reviewStatus ? String(reviewStatus).trim().toLowerCase() : null;
@@ -886,7 +884,6 @@ async function getAccusedComplaints(accusedEmployeeHash, limit = 100) {
   }));
 }
 
->>>>>>> d0890d4 (Feature: HR Voting System)
 module.exports = {
   getEscalationIndex,
   getRepeatOffenders,
@@ -899,9 +896,6 @@ module.exports = {
   getOverview,
   getInsightsBundle,
   getAccusedBreakdown,
-<<<<<<< HEAD
-=======
   getSuspiciousClusters,
   getAccusedComplaints,
->>>>>>> d0890d4 (Feature: HR Voting System)
 };

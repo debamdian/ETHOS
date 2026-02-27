@@ -33,14 +33,10 @@ async function listMessages(complaintReference, user) {
      JOIN chat_threads ct ON ct.id = cm.thread_id
      JOIN complaints c ON c.id = ct.complaint_id
      WHERE (c.complaint_code = $1 OR c.id::text = $1)
-<<<<<<< HEAD
-       AND ($2::boolean = true OR c.anon_user_id = $3)
-=======
        AND (
          ($2::boolean = true AND c.assigned_hr_id = $3)
          OR ($2::boolean = false AND c.anon_user_id = $3)
        )
->>>>>>> d0890d4 (Feature: HR Voting System)
      ORDER BY cm.created_at ASC`,
     [complaintReference, isHr, user.id]
   );
@@ -70,14 +66,10 @@ async function listThreadSummaries(user) {
        ORDER BY cm.created_at DESC
        LIMIT 1
      ) lm ON true
-<<<<<<< HEAD
-     WHERE ($1::boolean = true OR c.anon_user_id = $2)
-=======
      WHERE (
        ($1::boolean = true AND c.assigned_hr_id = $2)
        OR ($1::boolean = false AND c.anon_user_id = $2)
      )
->>>>>>> d0890d4 (Feature: HR Voting System)
      ORDER BY COALESCE(lm.created_at, ct.created_at) DESC`,
     [isHr, user.id]
   );

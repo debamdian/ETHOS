@@ -198,8 +198,6 @@ async function accusedBreakdown(req, res, next) {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function suspiciousClusters(req, res, next) {
   try {
     await auditPatternAccess(req, 'hr.pattern_detection.suspicious_clusters.view');
@@ -229,7 +227,6 @@ async function accusedComplaints(req, res, next) {
   }
 }
 
->>>>>>> d0890d4 (Feature: HR Voting System)
 module.exports = {
   overview,
   repeatOffenders,
@@ -240,9 +237,6 @@ module.exports = {
   insights,
   riskAcceleration,
   accusedBreakdown,
-<<<<<<< HEAD
-=======
   suspiciousClusters,
   accusedComplaints,
->>>>>>> d0890d4 (Feature: HR Voting System)
 };
