@@ -143,6 +143,124 @@ export type PatternInsightsRecord = {
   alerts: PatternAlertRecord[];
 };
 
+export type HrDashboardOverviewRecord = {
+  total_today: number;
+  total_yesterday: number;
+  total_month: number;
+  under_hr_review: number;
+  under_committee_review: number;
+  active_cases: number;
+  closed_cases: number;
+  high_risk_cases: number;
+  stale_cases: number;
+  status_funnel: {
+    submitted: number;
+    under_review: number;
+    resolved: number;
+    rejected: number;
+  };
+  weekly_trend: number[];
+  pattern_profile_count: number;
+  alerts: PatternAlertRecord[];
+};
+
+export type HrDepartmentRiskRecord = {
+  name: string;
+  high: number;
+  medium: number;
+  low: number;
+  total: number;
+};
+
+export type PatternDetectionOverview = {
+  escalation_index: {
+    current_count: number;
+    previous_count: number;
+    percentage_change: number;
+    trend: "increasing" | "decreasing" | "stable";
+  };
+  high_risk_accused_count: number;
+  targeting_alerts_count: number;
+  low_evidence_percentage: number;
+  low_evidence_trend: {
+    current_ratio: number;
+    previous_ratio: number;
+    percentage_change: number;
+    trend: "increasing" | "decreasing" | "stable";
+  };
+  avg_resolution_time_hours: number;
+  active_under_review: number;
+};
+
+export type RepeatOffenderRecord = {
+  accused_employee_hash: string;
+  total_complaints: number;
+  guilty_count: number;
+  risk_level: "low" | "medium" | "high";
+  recurrence_interval: number | null;
+};
+
+export type TargetingAlertRecord = {
+  accused_employee_hash: string;
+  complaint_count: number;
+  avg_credibility: number;
+  alert_level: "medium" | "high";
+};
+
+export type DepartmentRiskRecord = {
+  department: string;
+  risk_score: number;
+  previous_risk_score: number | null;
+  risk_change_percentage: number;
+  escalation_flag: boolean;
+  last_updated: string;
+};
+
+export type PatternTimeTrendRecord = {
+  week_start: string;
+  complaints_count: number;
+  avg_severity_score: number;
+  guilty_verdict_rate: number;
+};
+
+export type SuspiciousComplainantRecord = {
+  anon_user_id: string;
+  credibility_score: number;
+  total_complaints: number;
+  rejected_ratio: number;
+  credibility_trend: Array<{
+    credibility_score: number;
+    created_at: string;
+  }>;
+};
+
+export type RiskAccelerationRecord = {
+  accused_employee_hash: string;
+  recent_complaint_count: number;
+  time_window_days: number;
+};
+
+export type PatternInsightMessage = {
+  severity: "low" | "medium" | "high";
+  message: string;
+};
+
+export type AccusedBreakdownRecord = {
+  accused_employee_hash: string;
+  status_breakdown: {
+    submitted: number;
+    under_review: number;
+    resolved: number;
+    rejected: number;
+  };
+  weekly_timeline: Array<{
+    week_start: string;
+    complaint_count: number;
+    avg_severity: number;
+  }>;
+  no_evidence_ratio: number;
+};
+
 export type ChatThreadSummary = {
   thread_id: string;
   complaint_id: string;
@@ -234,7 +352,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
             headers,
             cache: "no-store",
           });
-          return (await retryResponse.json()) as T;
+          const retryData = (await retryResponse.json()) as T & {
+            success?: boolean;
+            message?: string;
+            details?: unknown;
+          };
+
+          if (!retryResponse.ok || !retryData.success) {
+            throw new ApiRequestError(
+              retryData.message || "Request failed.",
+              retryResponse.status,
+              retryData.details
+            );
+          }
+
+          return retryData as T;
         }
       } catch (e) {
         console.error("Token refresh failed", e);
@@ -451,6 +583,83 @@ export async function fetchAccusedPatterns() {
 export async function fetchPatternInsights() {
   const result = await request<{ success: boolean; data: PatternInsightsRecord }>(
     "/hr/pattern-insights"
+  );
+  return result.data;
+}
+
+export async function fetchHrDashboardOverview() {
+  const result = await request<{ success: boolean; data: HrDashboardOverviewRecord }>(
+    "/hr/dashboard-overview"
+  );
+  return result.data;
+}
+
+export async function fetchHrDashboardDepartmentRisk() {
+  const result = await request<{ success: boolean; data: HrDepartmentRiskRecord[] }>(
+    "/hr/dashboard-department-risk"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionOverview() {
+  const result = await request<{ success: boolean; data: PatternDetectionOverview }>(
+    "/hr/pattern-detection/overview"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionRepeatOffenders() {
+  const result = await request<{ success: boolean; data: RepeatOffenderRecord[] }>(
+    "/hr/pattern-detection/repeat-offenders"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionTargetingAlerts() {
+  const result = await request<{ success: boolean; data: TargetingAlertRecord[] }>(
+    "/hr/pattern-detection/targeting-alerts"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionDepartmentRisk() {
+  const result = await request<{ success: boolean; data: DepartmentRiskRecord[] }>(
+    "/hr/pattern-detection/department-risk"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionTimeTrends() {
+  const result = await request<{ success: boolean; data: PatternTimeTrendRecord[] }>(
+    "/hr/pattern-detection/time-trends"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionCredibilityRisk() {
+  const result = await request<{ success: boolean; data: SuspiciousComplainantRecord[] }>(
+    "/hr/pattern-detection/credibility-risk"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionInsights() {
+  const result = await request<{ success: boolean; data: PatternInsightMessage[] }>(
+    "/hr/pattern-detection/insights"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionRiskAcceleration() {
+  const result = await request<{ success: boolean; data: RiskAccelerationRecord[] }>(
+    "/hr/pattern-detection/risk-acceleration"
+  );
+  return result.data;
+}
+
+export async function fetchPatternDetectionAccusedBreakdown(accusedHash: string) {
+  const result = await request<{ success: boolean; data: AccusedBreakdownRecord }>(
+    `/hr/pattern-detection/accused/${encodeURIComponent(accusedHash)}/breakdown`
   );
   return result.data;
 }
