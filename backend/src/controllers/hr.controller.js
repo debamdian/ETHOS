@@ -87,6 +87,42 @@ async function queue(req, res, next) {
   }
 }
 
+async function history(req, res, next) {
+  try {
+    const complaints = await complaintModel.listResolvedHistoryForHr(req.user.id);
+    const data = complaints.map((item) => {
+      const decrypted = decryptFields(item, ['description']);
+      return {
+        id: item.id,
+        complaint_code: item.complaint_code,
+        accused_employee_hash: item.accused_employee_hash || null,
+        location: null,
+        description: null,
+        severity_score: Number(item.severity_score) || 0,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        incident_summary: String(decrypted.description || '').slice(0, 240),
+        incident_date: item.incident_date || null,
+        status: item.status,
+        workflow_status: resolveWorkflowStatus(item),
+        status_label: toQueueStatusLabel(item),
+        assigned_hr: item.assigned_hr_id
+          ? {
+            id: item.assigned_hr_id,
+            name: hrAliasName(item.assigned_hr_name, item.assigned_hr_id),
+          }
+          : null,
+        can_accept: false,
+        can_view: String(item.assigned_hr_id) === String(req.user.id),
+      };
+    });
+
+    return res.json({ success: true, data });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 async function listNotifications(req, res, next) {
   try {
     const rows = await complaintModel.listCommitteeNotifications(req.user.id);
@@ -551,6 +587,7 @@ async function patternInsights(req, res, next) {
 
 module.exports = {
   queue,
+  history,
   caseDetail,
   acceptCase,
   submitInvestigatorDecision,

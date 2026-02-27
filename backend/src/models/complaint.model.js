@@ -60,8 +60,32 @@ async function listForHrQueue() {
       END) AS workflow_status_resolved
      FROM complaints c
      LEFT JOIN hr_users hu ON hu.id = c.assigned_hr_id
+     WHERE c.status NOT IN ('resolved', 'rejected')
      ORDER BY c.created_at DESC`
   );
+  return result.rows;
+}
+
+async function listResolvedHistoryForHr(hrUserId) {
+  const result = await query(
+    `SELECT
+      c.*,
+      hu.name AS assigned_hr_name,
+      COALESCE(c.workflow_status::text, CASE
+        WHEN c.status = 'under_review' THEN 'under_review'
+        WHEN c.status = 'resolved' THEN 'resolved'
+        WHEN c.status = 'rejected' THEN 'rejected'
+        WHEN c.assigned_hr_id IS NOT NULL THEN 'in_progress'
+        ELSE 'open'
+      END) AS workflow_status_resolved
+     FROM complaints c
+     LEFT JOIN hr_users hu ON hu.id = c.assigned_hr_id
+     WHERE c.assigned_hr_id = $1
+       AND c.status IN ('resolved', 'rejected')
+     ORDER BY c.updated_at DESC, c.created_at DESC`,
+    [hrUserId]
+  );
+
   return result.rows;
 }
 
@@ -391,6 +415,7 @@ module.exports = {
   listForReporter,
   listForHr,
   listForHrQueue,
+  listResolvedHistoryForHr,
   listForHrDepartmentRisk,
   getHrDashboardSummary,
   findByReference,

@@ -664,6 +664,11 @@ export async function fetchHrQueue() {
   return result.data;
 }
 
+export async function fetchHrHistory() {
+  const result = await request<{ success: boolean; data: HrQueueRecord[] }>("/hr/history");
+  return result.data;
+}
+
 export async function acceptHrCase(complaintReference: string) {
   const result = await request<{
     success: boolean;

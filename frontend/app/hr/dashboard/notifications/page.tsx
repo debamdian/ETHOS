@@ -7,6 +7,7 @@ import {
   BookCheck,
   ClipboardList,
   FileSearch,
+  History,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -67,6 +68,7 @@ export default function HrNotificationsPage() {
   const links = [
     { label: "HR Dashboard", href: "/hr/dashboard", icon: <LayoutDashboard className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Queue", href: "/hr/dashboard/queue", icon: <ClipboardList className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
+    { label: "History", href: "/hr/dashboard/history", icon: <History className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Notifications", href: "/hr/dashboard/notifications", icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Evidence & Timeline", href: "/hr/dashboard/evidence-timeline", icon: <FileSearch className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Pattern Detection", href: "/hr/dashboard/pattern-detection", icon: <Users className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },

@@ -7,6 +7,7 @@ import {
   BookCheck,
   ClipboardList,
   FileSearch,
+  History,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -160,6 +161,11 @@ export default function HrQueuePage() {
       label: "Queue",
       href: "/hr/dashboard/queue",
       icon: <ClipboardList className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "History",
+      href: "/hr/dashboard/history",
+      icon: <History className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Evidence & Timeline",
@@ -388,7 +394,7 @@ export default function HrQueuePage() {
     setQueue(safeLatest);
     setActiveComplaint((prev) => {
       if (!prev) return prev;
-      return safeLatest.find((item) => item.complaint_code === prev.complaint_code) || prev;
+      return safeLatest.find((item) => item.complaint_code === prev.complaint_code) || null;
     });
   };
 
@@ -482,19 +488,13 @@ export default function HrQueuePage() {
 
     try {
       const updated = await updateHrComplaintStatus(activeComplaint.complaint_code, statusDraft, rejectionType);
-      setQueue((prev) =>
-        prev.map((item) =>
-          item.complaint_code === updated.complaint_code
-            ? { ...item, status: updated.status, rejection_type: updated.rejection_type ?? null }
-            : item
-        )
-      );
-      setActiveComplaint((prev) =>
-        prev ? { ...prev, status: updated.status, rejection_type: updated.rejection_type ?? null } : prev
-      );
+      await reloadQueue();
       setStatusDraft(updated.status);
       setRejectionTypeDraft(updated.rejection_type ?? "");
       setStatusUpdateNotice(`Status updated to ${statusLabel(updated.status)}.`);
+      if (["resolved", "rejected"].includes(updated.status)) {
+        closeComplaintModal();
+      }
     } catch (err) {
       setStatusUpdateError(err instanceof Error ? err.message : "Unable to update complaint status.");
     } finally {
@@ -649,8 +649,6 @@ export default function HrQueuePage() {
                       <option value="all">All Status</option>
                       <option value="submitted">Submitted</option>
                       <option value="under_review">Under Review</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="rejected">Rejected</option>
                     </select>
 
                     <select

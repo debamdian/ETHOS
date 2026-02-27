@@ -8,6 +8,7 @@ import {
   BookCheck,
   ClipboardList,
   FileSearch,
+  History,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -59,7 +60,7 @@ const EMPTY_OVERVIEW: HrDashboardOverviewRecord = {
 
 export default function HrDashboardPage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
@@ -77,6 +78,11 @@ export default function HrDashboardPage() {
       label: "Queue",
       href: "/hr/dashboard/queue",
       icon: <ClipboardList className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "History",
+      href: "/hr/dashboard/history",
+      icon: <History className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Evidence & Timeline",
@@ -238,7 +244,7 @@ export default function HrDashboardPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/90 px-5 py-4 backdrop-blur-xl md:px-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-[0.12em] text-slate-900">HR Dashboard</h1>
+                <h1 className="text-3xl font-black tracking-[0.12em] text-slate-900">{user?.name || "HR Dashboard"}</h1>
                 <p className="mt-1 text-sm text-slate-600">
                   Queue operations are moved to the dedicated Queue page. This dashboard now focuses on trends, risk, and governance insights.
                 </p>
@@ -251,6 +257,13 @@ export default function HrDashboardPage() {
                 >
                   <ClipboardList className="h-4 w-4" />
                   Open Queue
+                </Link>
+                <Link
+                  href="/hr/dashboard/history"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  <History className="h-4 w-4" />
+                  Open History
                 </Link>
                 <button
                   onClick={logout}
