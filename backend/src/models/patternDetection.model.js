@@ -795,6 +795,98 @@ async function getAccusedBreakdown(accusedEmployeeHash) {
   };
 }
 
+<<<<<<< HEAD
+=======
+async function getSuspiciousClusters({ limit = 25, reviewStatus = null } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 25, 1), 100);
+  const safeStatus = reviewStatus ? String(reviewStatus).trim().toLowerCase() : null;
+  const allowedStatus = safeStatus && ['pending', 'reviewed', 'dismissed'].includes(safeStatus)
+    ? safeStatus
+    : null;
+
+  try {
+    const result = await query(
+      `SELECT
+         id,
+         accused_employee_hash,
+         cluster_suspicion_score,
+         diversity_index,
+         complaint_ids,
+         unique_device_count,
+         similarity_cluster_count,
+         review_status,
+         created_at,
+         updated_at
+       FROM suspicious_clusters
+       WHERE ($1::text IS NULL OR review_status = $1)
+       ORDER BY cluster_suspicion_score DESC, updated_at DESC
+       LIMIT $2`,
+      [allowedStatus, safeLimit]
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      accused_employee_hash: row.accused_employee_hash,
+      cluster_suspicion_score: toNumber(row.cluster_suspicion_score),
+      diversity_index: toNumber(row.diversity_index),
+      complaint_ids: Array.isArray(row.complaint_ids) ? row.complaint_ids : [],
+      unique_device_count: toNumber(row.unique_device_count),
+      similarity_cluster_count: toNumber(row.similarity_cluster_count),
+      review_status: row.review_status,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
+  } catch (err) {
+    const message = String(err?.message || '').toLowerCase();
+    const isMissingRelation = message.includes('relation') && message.includes('does not exist');
+    if (isMissingRelation) {
+      return [];
+    }
+    throw err;
+  }
+}
+
+async function getAccusedComplaints(accusedEmployeeHash, limit = 100) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 100, 1), 500);
+  const result = await query(
+    `SELECT
+       c.id,
+       c.complaint_code,
+       c.status,
+       c.severity_score,
+       c.incident_date,
+       c.created_at,
+       c.updated_at,
+       COUNT(ef.id)::int AS evidence_count,
+       v.verdict,
+       v.decided_at
+     FROM complaints c
+     LEFT JOIN evidence_files ef
+       ON ef.complaint_id = c.id
+     LEFT JOIN verdicts v
+       ON v.complaint_id = c.id
+     WHERE c.accused_employee_hash = $1
+     GROUP BY c.id, v.verdict, v.decided_at
+     ORDER BY c.created_at DESC
+     LIMIT $2`,
+    [accusedEmployeeHash, safeLimit]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    complaint_code: row.complaint_code,
+    status: row.status,
+    severity_score: toRounded(row.severity_score),
+    incident_date: row.incident_date,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    evidence_count: toNumber(row.evidence_count),
+    verdict: row.verdict || null,
+    decided_at: row.decided_at || null,
+  }));
+}
+
+>>>>>>> d0890d4 (Feature: HR Voting System)
 module.exports = {
   getEscalationIndex,
   getRepeatOffenders,
@@ -807,4 +899,9 @@ module.exports = {
   getOverview,
   getInsightsBundle,
   getAccusedBreakdown,
+<<<<<<< HEAD
+=======
+  getSuspiciousClusters,
+  getAccusedComplaints,
+>>>>>>> d0890d4 (Feature: HR Voting System)
 };

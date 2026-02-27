@@ -12,10 +12,12 @@ const {
   toUserType,
   buildThreadStateFromMessages,
 } = require('../services/chat.service');
+const { canAccessChat } = require('../services/caseAccess.service');
 
 async function getComplaintForActorOr404(reference, user) {
-  const complaint = await complaintModel.findByReferenceForUser(reference, user);
+  const complaint = await complaintModel.findByReference(reference);
   if (!complaint) throw new ApiError(404, 'Complaint not found');
+  if (!canAccessChat(complaint, user)) throw new ApiError(403, 'You do not have access to chat for this case');
   return complaint;
 }
 

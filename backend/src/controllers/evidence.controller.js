@@ -4,6 +4,7 @@ const hashEvidence = require('../utils/hashEvidence');
 const { encryptFields, decryptFields } = require('../services/encryption.service');
 const { logAuditEvent } = require('../services/audit.service');
 const { supabaseService } = require('../config/supabase');
+const { canViewFullComplaint, isAssignedInvestigator } = require('../services/caseAccess.service');
 
 const EVIDENCE_BUCKET = process.env.SUPABASE_EVIDENCE_BUCKET || 'evidence';
 const EVIDENCE_SIGNED_URL_TTL_SECONDS = Number(process.env.EVIDENCE_SIGNED_URL_TTL_SECONDS || 600);
@@ -58,9 +59,15 @@ async function uploadEvidence(req, res, next) {
     }
 
     const { complaintId } = req.params;
-    const complaint = await complaintModel.findByReferenceForUser(complaintId, req.user);
+    const complaint = await complaintModel.findByReference(complaintId);
     if (!complaint) {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+    const isReporterOwner = req.user.role === 'reporter'
+      && String(complaint.anon_user_id) === String(req.user.id);
+    const isAssignedHr = isAssignedInvestigator(complaint, req.user.id);
+    if (!isReporterOwner && !isAssignedHr) {
+      return res.status(403).json({ success: false, message: 'You do not have access to upload evidence for this case' });
     }
 
     const sha256Hash = hashEvidence(req.file.buffer);
@@ -120,8 +127,63 @@ async function uploadEvidence(req, res, next) {
 async function listEvidence(req, res, next) {
   try {
     const { complaintId } = req.params;
-    const records = await evidenceModel.listEvidenceForComplaint(complaintId, req.user);
+    const complaint = await complaintModel.findByReference(complaintId);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+    const isReporterOwner = req.user.role === 'reporter'
+      && String(complaint.anon_user_id) === String(req.user.id);
+    const hrAllowed = canViewFullComplaint(complaint, req.user);
+    if (!isReporterOwner && !hrAllowed) {
+      return res.status(403).json({ success: false, message: 'You do not have access to evidence for this case' });
+    }
 
+    const records = await evidenceModel.listEvidenceForComplaint(complaintId);
+
+    const normalized = await Promise.all(records.map(async (row) => {
+      const metadata = row.metadata || {};
+      let signedUrl = null;
+
+      if (supabaseService) {
+        const storageRef = parseSupabaseRef(row.file_url, metadata);
+        if (storageRef) {
+          const signed = await supabaseService.storage
+            .from(storageRef.bucket)
+            .createSignedUrl(storageRef.path, EVIDENCE_SIGNED_URL_TTL_SECONDS);
+          if (!signed.error) {
+            signedUrl = signed.data?.signedUrl || null;
+          }
+        }
+      }
+
+      return {
+        ...row,
+        metadata: {
+          ...metadata,
+          notes: safelyDecryptNote(metadata.notes),
+        },
+        signed_url: signedUrl,
+      };
+    }));
+
+    return res.json({ success: true, data: normalized });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function listEvidenceForNotificationReview(req, res, next) {
+  try {
+    if (!['hr', 'committee', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Only HR users can access notification evidence' });
+    }
+
+    const complaint = await complaintModel.findNotificationCase(req.params.complaintId, req.user.id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: 'Notification case not found or not available for voting' });
+    }
+
+    const records = await evidenceModel.listEvidenceForComplaint(req.params.complaintId);
     const normalized = await Promise.all(records.map(async (row) => {
       const metadata = row.metadata || {};
       let signedUrl = null;
@@ -157,4 +219,5 @@ async function listEvidence(req, res, next) {
 module.exports = {
   uploadEvidence,
   listEvidence,
+  listEvidenceForNotificationReview,
 };

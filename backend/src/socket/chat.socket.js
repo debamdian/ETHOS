@@ -10,6 +10,10 @@ const {
   toSenderType,
   toVisibleMessages,
 } = require('../services/chat.service');
+<<<<<<< HEAD
+=======
+const { canAccessChat } = require('../services/caseAccess.service');
+>>>>>>> d0890d4 (Feature: HR Voting System)
 
 function isHrRole(role) {
   return ['hr', 'committee', 'admin'].includes(role);
@@ -36,10 +40,20 @@ function getTokenFromSocket(socket) {
 }
 
 async function loadThreadContext(complaintCode, user) {
+<<<<<<< HEAD
   const complaint = await complaintModel.findByReferenceForUser(complaintCode, user);
   if (!complaint) {
     throw new Error('Complaint not found');
   }
+=======
+  const complaint = await complaintModel.findByReference(complaintCode);
+  if (!complaint) {
+    throw new Error('Complaint not found');
+  }
+  if (!canAccessChat(complaint, user)) {
+    throw new Error('You do not have access to chat for this case');
+  }
+>>>>>>> d0890d4 (Feature: HR Voting System)
 
   const rawMessages = await chatModel.listMessages(complaint.complaint_code, user);
   const decryptedMessages = rawMessages.map((item) => decryptFields(item, ['message']));

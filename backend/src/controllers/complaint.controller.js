@@ -4,11 +4,51 @@ const generateComplaintId = require('../utils/generateComplaintId');
 const { encryptFields, decryptFields } = require('../services/encryption.service');
 const { scoreCredibility } = require('../services/credibility.service');
 const { logAuditEvent } = require('../services/audit.service');
+<<<<<<< HEAD
+=======
+const { ApiError } = require('../middlewares/error.middleware');
+const { canViewFullComplaint, resolveWorkflowStatus } = require('../services/caseAccess.service');
+
+const STRONG_EVIDENCE_MIN_FILES = 2;
+const { evaluateAndPersistSuspiciousCluster } = require('../services/suspiciousCluster.service');
+>>>>>>> d0890d4 (Feature: HR Voting System)
 
 function toUserType(role) {
   return role === 'reporter' ? 'anon' : 'hr';
 }
 
+<<<<<<< HEAD
+=======
+function sanitizeForReporter(complaint) {
+  const { rejection_type, ...rest } = complaint;
+  const workflowStatus = resolveWorkflowStatus(complaint);
+  const displayStatus =
+    workflowStatus === 'resolved' || workflowStatus === 'resolved_accepted'
+      ? 'resolved'
+      : workflowStatus === 'rejected' || workflowStatus === 'resolved_rejected'
+        ? 'rejected'
+        : 'pending';
+  return { ...rest, display_status: displayStatus };
+}
+
+function sanitizeForRestrictedHr(complaint) {
+  return {
+    complaint_code: complaint.complaint_code,
+    status: complaint.status,
+    workflow_status: resolveWorkflowStatus(complaint),
+    assigned_hr_id: complaint.assigned_hr_id || null,
+    assigned_hr_name: complaint.assigned_hr_name || null,
+    updated_at: complaint.updated_at,
+  };
+}
+
+function normalizeRejectionType(value) {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+>>>>>>> d0890d4 (Feature: HR Voting System)
 async function createComplaint(req, res, next) {
   try {
     const payload = req.body;
@@ -57,7 +97,14 @@ async function listComplaints(req, res, next) {
       : await complaintModel.listForHr();
 
     const decryptedRows = rows.map((item) => decryptFields(item, ['description', 'location']));
+<<<<<<< HEAD
     return res.json({ success: true, data: decryptedRows });
+=======
+    const responseRows = req.user.role === 'reporter'
+      ? decryptedRows.map(sanitizeForReporter)
+      : decryptedRows.map((item) => (canViewFullComplaint(item, req.user) ? item : sanitizeForRestrictedHr(item)));
+    return res.json({ success: true, data: responseRows });
+>>>>>>> d0890d4 (Feature: HR Voting System)
   } catch (err) {
     return next(err);
   }
@@ -71,6 +118,17 @@ async function getComplaint(req, res, next) {
     }
 
     const decrypted = decryptFields(complaint, ['description', 'location']);
+<<<<<<< HEAD
+=======
+    let responseData;
+    if (req.user.role === 'reporter') {
+      responseData = sanitizeForReporter(decrypted);
+    } else if (canViewFullComplaint(decrypted, req.user)) {
+      responseData = decrypted;
+    } else {
+      responseData = sanitizeForRestrictedHr(decrypted);
+    }
+>>>>>>> d0890d4 (Feature: HR Voting System)
 
     return res.json({ success: true, data: decrypted });
   } catch (err) {
@@ -80,7 +138,19 @@ async function getComplaint(req, res, next) {
 
 async function updateComplaintStatus(req, res, next) {
   try {
+<<<<<<< HEAD
     const updated = await complaintModel.updateStatusByHr(req.params.complaintId, req.body.status);
+=======
+    const complaint = await complaintModel.findByReferenceForUser(req.params.complaintId, req.user);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: 'Complaint not found' });
+    }
+    if (['hr', 'committee', 'admin'].includes(req.user.role)
+      && complaint.assigned_hr_id
+      && String(complaint.assigned_hr_id) !== String(req.user.id)) {
+      throw new ApiError(403, 'Only assigned investigator can update this case status');
+    }
+>>>>>>> d0890d4 (Feature: HR Voting System)
 
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Complaint not found' });

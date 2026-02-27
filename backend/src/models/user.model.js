@@ -108,6 +108,22 @@ async function updateAnonPassword(id, password_hash) {
   await query('UPDATE anonymous_users SET password_hash = $2 WHERE id = $1', [id, password_hash]);
 }
 
+<<<<<<< HEAD
+=======
+async function adjustAnonCredibility(id, delta) {
+  const result = await query(
+    `UPDATE anonymous_users
+     SET credibility_score = LEAST(200, GREATEST(0, COALESCE(credibility_score, 100) + $2)),
+         trust_flag = LEAST(200, GREATEST(0, COALESCE(credibility_score, 100) + $2)) >= 70
+     WHERE id = $1
+     RETURNING id, credibility_score, trust_flag`,
+    [id, delta]
+  );
+
+  return result.rows[0] || null;
+}
+
+>>>>>>> d0890d4 (Feature: HR Voting System)
 async function findHrById(id) {
   const result = await query(
     `SELECT id, name, email, role, two_factor_enabled, created_at
@@ -135,4 +151,8 @@ module.exports = {
   findHrById,
   updateAnonLastLogin,
   updateAnonPassword,
+<<<<<<< HEAD
+=======
+  adjustAnonCredibility,
+>>>>>>> d0890d4 (Feature: HR Voting System)
 };
