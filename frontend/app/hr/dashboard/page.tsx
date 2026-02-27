@@ -244,7 +244,7 @@ export default function HrDashboardPage() {
           <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/90 px-5 py-4 backdrop-blur-xl md:px-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-[0.12em] text-slate-900">{user?.name || "HR Dashboard"}</h1>
+                <h1 className="text-3xl font-black tracking-[0.12em] text-slate-900">HR Dashboard</h1>
                 <p className="mt-1 text-sm text-slate-600">
                   Queue operations are moved to the dedicated Queue page. This dashboard now focuses on trends, risk, and governance insights.
                 </p>
