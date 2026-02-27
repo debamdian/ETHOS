@@ -20,6 +20,13 @@ import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { useAuth } from "@/components/auth/auth-context";
 import { listMyComplaints, type ComplaintRecord } from "@/lib/auth-api";
 
+function complaintDisplayStatus(complaint: ComplaintRecord): "pending" | "resolved" | "rejected" {
+  if (complaint.display_status) return complaint.display_status;
+  if (complaint.status === "resolved") return "resolved";
+  if (complaint.status === "rejected") return "rejected";
+  return "pending";
+}
+
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -47,9 +54,9 @@ export default function DashboardPage() {
 
   const stats = useMemo(() => {
     const total = complaints.length;
-    const active = complaints.filter((item) => item.status === "submitted" || item.status === "under_review").length;
-    const resolved = complaints.filter((item) => item.status === "resolved").length;
-    const rejected = complaints.filter((item) => item.status === "rejected").length;
+    const active = complaints.filter((item) => complaintDisplayStatus(item) === "pending").length;
+    const resolved = complaints.filter((item) => complaintDisplayStatus(item) === "resolved").length;
+    const rejected = complaints.filter((item) => complaintDisplayStatus(item) === "rejected").length;
     return { total, active, resolved, rejected };
   }, [complaints]);
 
@@ -58,11 +65,10 @@ export default function DashboardPage() {
     [complaints]
   );
 
-  const toStatusLabel = (status: ComplaintRecord["status"]) => {
-    if (status === "under_review") return "Under Review";
+  const toStatusLabel = (status: "pending" | "resolved" | "rejected") => {
     if (status === "resolved") return "Resolved";
     if (status === "rejected") return "Rejected";
-    return "Submitted";
+    return "Pending";
   };
 
   const links = [
@@ -194,7 +200,7 @@ export default function DashboardPage() {
                           <td className="py-3">{new Date(row.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
                           <td className="py-3">
                             <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                              {toStatusLabel(row.status)}
+                              {toStatusLabel(complaintDisplayStatus(row))}
                             </span>
                           </td>
                           <td className="py-3 text-right">

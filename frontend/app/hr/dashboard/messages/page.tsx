@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  BookCheck,
   CheckCheck,
   Circle,
   ClipboardList,
@@ -162,6 +163,11 @@ export default function HrMessagesPage() {
       label: "Messages",
       href: "/hr/dashboard/messages",
       icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "Compliance",
+      href: "/hr/dashboard/compliance",
+      icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Logout",

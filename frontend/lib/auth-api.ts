@@ -68,12 +68,55 @@ export type ComplaintRecord = {
   location: string | null;
   description: string;
   status: "submitted" | "under_review" | "resolved" | "rejected";
+  display_status?: "pending" | "resolved" | "rejected";
+  rejection_type?: "insufficient" | "false" | "malicious" | null;
   severity_score: number;
   created_at: string;
   updated_at: string;
 };
 
 export type HrComplaintRecord = Omit<ComplaintRecord, "anon_user_id">;
+
+export type RejectionType = "insufficient" | "false" | "malicious";
+export type CaseWorkflowStatus =
+  | "open"
+  | "in_progress"
+  | "under_review"
+  | "resolved"
+  | "rejected"
+  | "resolved_accepted"
+  | "resolved_rejected"
+  | "reopened";
+export type HrAssignedUser = { id: string; name: string };
+export type HrQueueRecord = HrComplaintRecord & {
+  workflow_status?: CaseWorkflowStatus;
+  status_label?: string;
+  can_accept?: boolean;
+  can_view?: boolean;
+  assigned_hr?: HrAssignedUser | null;
+  incident_summary?: string | null;
+};
+
+export type HrNotificationRecord = {
+  complaint_code: string;
+  workflow_status: CaseWorkflowStatus;
+  status: ComplaintRecord["status"];
+  investigator_decision_notes: string | null;
+  investigator_decision_at: string | null;
+  assigned_hr: HrAssignedUser;
+  my_vote: "support" | "oppose" | null;
+  my_vote_updated_at: string | null;
+  updated_at: string;
+};
+
+export type HrNotificationDetail = HrComplaintRecord & {
+  workflow_status: CaseWorkflowStatus;
+  assigned_hr: HrAssignedUser;
+  my_vote: "support" | "oppose" | null;
+  my_vote_updated_at: string | null;
+  investigator_decision_notes: string | null;
+  investigator_decision_at: string | null;
+};
 
 export type VerdictRecord = {
   id: string;
@@ -240,6 +283,32 @@ export type RiskAccelerationRecord = {
   time_window_days: number;
 };
 
+export type SuspiciousClusterRecord = {
+  id: string;
+  accused_employee_hash: string;
+  cluster_suspicion_score: number;
+  diversity_index: number;
+  complaint_ids: string[];
+  unique_device_count: number;
+  similarity_cluster_count: number;
+  review_status: "pending" | "reviewed" | "dismissed";
+  created_at: string;
+  updated_at: string;
+};
+
+export type AccusedComplaintRecord = {
+  id: string;
+  complaint_code: string;
+  status: "submitted" | "under_review" | "resolved" | "rejected";
+  severity_score: number;
+  incident_date: string | null;
+  created_at: string;
+  updated_at: string;
+  evidence_count: number;
+  verdict: "guilty" | "not_guilty" | "insufficient_evidence" | null;
+  decided_at: string | null;
+};
+
 export type PatternInsightMessage = {
   severity: "low" | "medium" | "high";
   message: string;
@@ -311,6 +380,28 @@ type CreateComplaintPayload = {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:5000/api/v1";
 
+function toNetworkErrorMessage(err: unknown) {
+  const base = `Unable to reach API at ${API_BASE_URL}. Check backend server, API URL, and CORS origin.`;
+  const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
+  return `${base}${detail}`;
+}
+
+async function safeFetch(input: string, init?: RequestInit) {
+  try {
+    return await fetch(input, init);
+  } catch (err) {
+    throw new ApiRequestError(toNetworkErrorMessage(err), 0);
+  }
+}
+
+async function safeJson<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = Cookies.get("accessToken");
 
@@ -323,7 +414,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await safeFetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
     cache: "no-store",
@@ -334,29 +425,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const refreshToken = Cookies.get("refreshToken");
     if (refreshToken) {
       try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const refreshResponse = await safeFetch(`${API_BASE_URL}/auth/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
         });
 
-        const refreshData = await refreshResponse.json();
-        if (refreshData.success) {
+        const refreshData = await safeJson<{ success?: boolean; data?: { tokens?: { accessToken?: string } } }>(refreshResponse);
+        if (refreshResponse.ok && refreshData?.success && refreshData.data?.tokens?.accessToken) {
           const newAccessToken = refreshData.data.tokens.accessToken;
           Cookies.set("accessToken", newAccessToken, { expires: 7 });
 
           // Retry the original request
           headers.set("Authorization", `Bearer ${newAccessToken}`);
-          const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+          const retryResponse = await safeFetch(`${API_BASE_URL}${path}`, {
             ...init,
             headers,
             cache: "no-store",
           });
-          const retryData = (await retryResponse.json()) as T & {
+          const retryData = (await safeJson<T & {
             success?: boolean;
             message?: string;
             details?: unknown;
-          };
+          }>(retryResponse)) || ({} as T & { success?: boolean; message?: string; details?: unknown });
 
           if (!retryResponse.ok || !retryData.success) {
             throw new ApiRequestError(
@@ -377,11 +468,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     // For now just throw error
   }
 
-  const data = (await response.json()) as T & {
+  const data = ((await safeJson<T & {
     success?: boolean;
     message?: string;
     details?: unknown;
-  };
+  }>(response)) || ({} as T & { success?: boolean; message?: string; details?: unknown }));
 
   if (!response.ok || !data.success) {
     throw new ApiRequestError(data.message || "Request failed.", response.status, data.details);
@@ -569,7 +660,91 @@ export async function initiateChatRequest(complaintReference: string, message: s
 }
 
 export async function fetchHrQueue() {
-  const result = await request<{ success: boolean; data: HrComplaintRecord[] }>("/hr/queue");
+  const result = await request<{ success: boolean; data: HrQueueRecord[] }>("/hr/queue");
+  return result.data;
+}
+
+export async function acceptHrCase(complaintReference: string) {
+  const result = await request<{
+    success: boolean;
+    data: {
+      complaint_code: string;
+      workflow_status: CaseWorkflowStatus;
+      assigned_hr_id: string;
+    };
+  }>(`/hr/cases/${encodeURIComponent(complaintReference)}/accept`, {
+    method: "POST",
+  });
+  return result.data;
+}
+
+export async function fetchHrCaseDetail(complaintReference: string) {
+  const result = await request<{ success: boolean; data: HrComplaintRecord & { workflow_status?: CaseWorkflowStatus } }>(
+    `/hr/cases/${encodeURIComponent(complaintReference)}`
+  );
+  return result.data;
+}
+
+export async function submitHrCaseDecision(
+  complaintReference: string,
+  payload: { notes?: string }
+) {
+  const result = await request<{
+    success: boolean;
+    data: {
+      complaint_code: string;
+      workflow_status: CaseWorkflowStatus;
+      status: ComplaintRecord["status"];
+    };
+  }>(`/hr/cases/${encodeURIComponent(complaintReference)}/decision`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return result.data;
+}
+
+export async function fetchHrNotifications() {
+  const result = await request<{ success: boolean; data: HrNotificationRecord[] }>("/hr/notifications");
+  return result.data;
+}
+
+export async function fetchHrNotificationDetail(complaintReference: string) {
+  const result = await request<{ success: boolean; data: HrNotificationDetail }>(
+    `/hr/notifications/${encodeURIComponent(complaintReference)}`
+  );
+  return result.data;
+}
+
+export async function listEvidenceForNotificationReview(complaintReference: string) {
+  const result = await request<{ success: boolean; data: EvidenceRecord[] }>(
+    `/hr/notifications/${encodeURIComponent(complaintReference)}/evidence`
+  );
+  return result.data;
+}
+
+export async function castNotificationVote(
+  complaintReference: string,
+  vote: "support" | "oppose"
+) {
+  const result = await request<{
+    success: boolean;
+    data: {
+      complaint_code: string;
+      vote_tally: {
+        eligible_count: number;
+        support_count: number;
+        oppose_count: number;
+        threshold: number;
+      };
+      finalized: {
+        workflow_status: CaseWorkflowStatus;
+        status: ComplaintRecord["status"];
+      } | null;
+    };
+  }>(`/hr/notifications/${encodeURIComponent(complaintReference)}/vote`, {
+    method: "POST",
+    body: JSON.stringify({ vote }),
+  });
   return result.data;
 }
 
@@ -657,6 +832,13 @@ export async function fetchPatternDetectionRiskAcceleration() {
   return result.data;
 }
 
+export async function fetchPatternDetectionSuspiciousClusters() {
+  const result = await request<{ success: boolean; data: SuspiciousClusterRecord[] }>(
+    "/hr/pattern-detection/suspicious-clusters"
+  );
+  return result.data;
+}
+
 export async function fetchPatternDetectionAccusedBreakdown(accusedHash: string) {
   const result = await request<{ success: boolean; data: AccusedBreakdownRecord }>(
     `/hr/pattern-detection/accused/${encodeURIComponent(accusedHash)}/breakdown`
@@ -664,15 +846,27 @@ export async function fetchPatternDetectionAccusedBreakdown(accusedHash: string)
   return result.data;
 }
 
+export async function fetchPatternDetectionAccusedComplaints(accusedHash: string) {
+  const result = await request<{ success: boolean; data: AccusedComplaintRecord[] }>(
+    `/hr/pattern-detection/accused/${encodeURIComponent(accusedHash)}/complaints`
+  );
+  return result.data;
+}
+
 export async function updateHrComplaintStatus(
   complaintReference: string,
-  status: ComplaintRecord["status"]
+  status: ComplaintRecord["status"],
+  rejectionType?: RejectionType | null
 ) {
+  const payload: { status: ComplaintRecord["status"]; rejection_type?: RejectionType } = { status };
+  if (typeof rejectionType === "string" && rejectionType.length > 0) {
+    payload.rejection_type = rejectionType;
+  }
   const result = await request<{ success: boolean; data: HrComplaintRecord }>(
     `/complaints/${encodeURIComponent(complaintReference)}/status`,
     {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     }
   );
   return result.data;

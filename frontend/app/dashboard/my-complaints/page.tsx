@@ -27,12 +27,20 @@ import {
 } from "@/lib/auth-api";
 
 const PAGE_SIZE = 10;
+type ReporterDisplayStatus = "pending" | "resolved" | "rejected";
+
+function complaintDisplayStatus(complaint: ComplaintRecord): ReporterDisplayStatus {
+  if (complaint.display_status) return complaint.display_status;
+  if (complaint.status === "resolved") return "resolved";
+  if (complaint.status === "rejected") return "rejected";
+  return "pending";
+}
 
 export default function MyComplaintsPage() {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | ComplaintRecord["status"]>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | ReporterDisplayStatus>("all");
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState("");
   const [complaints, setComplaints] = useState<ComplaintRecord[]>([]);
@@ -76,7 +84,7 @@ export default function MyComplaintsPage() {
 
   const filtered = useMemo(() => {
     return complaints.filter((complaint) => {
-      const statusMatch = statusFilter === "all" ? true : complaint.status === statusFilter;
+      const statusMatch = statusFilter === "all" ? true : complaintDisplayStatus(complaint) === statusFilter;
       const searchMatch = complaint.complaint_code.toLowerCase().includes(search.trim().toLowerCase());
       return statusMatch && searchMatch;
     });
@@ -123,16 +131,14 @@ export default function MyComplaintsPage() {
     };
   }, [selectedComplaint?.complaint_code]);
 
-  const toStatusLabel = (status: ComplaintRecord["status"]) => {
-    if (status === "under_review") return "Under Review";
+  const toStatusLabel = (status: ReporterDisplayStatus) => {
     if (status === "resolved") return "Resolved";
     if (status === "rejected") return "Rejected";
-    return "Submitted";
+    return "Pending";
   };
 
-  const statusStyles: Record<ComplaintRecord["status"], string> = {
-    submitted: "border-blue-200 bg-blue-50 text-blue-700",
-    under_review: "border-yellow-200 bg-yellow-50 text-yellow-800",
+  const statusStyles: Record<ReporterDisplayStatus, string> = {
+    pending: "border-blue-200 bg-blue-50 text-blue-700",
     resolved: "border-emerald-200 bg-emerald-50 text-emerald-700",
     rejected: "border-red-200 bg-red-50 text-red-700",
   };
@@ -194,14 +200,13 @@ export default function MyComplaintsPage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => {
-                      setStatusFilter(e.target.value as "all" | ComplaintRecord["status"]);
+                      setStatusFilter(e.target.value as "all" | ReporterDisplayStatus);
                       setPage(1);
                     }}
                     className="h-10 min-w-[190px] rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-slate-500"
                   >
                     <option value="all">All</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="under_review">Under Review</option>
+                    <option value="pending">Pending</option>
                     <option value="resolved">Resolved</option>
                     <option value="rejected">Rejected</option>
                   </select>
@@ -244,8 +249,10 @@ export default function MyComplaintsPage() {
                             <td className="py-3">{complaint.incident_date || "N/A"}</td>
                             <td className="py-3">{new Date(complaint.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
                             <td className="py-3">
-                              <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${statusStyles[complaint.status]}`}>
-                                {toStatusLabel(complaint.status)}
+                              <span
+                                className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${statusStyles[complaintDisplayStatus(complaint)]}`}
+                              >
+                                {toStatusLabel(complaintDisplayStatus(complaint))}
                               </span>
                             </td>
                             <td className="py-3">{Math.round(complaint.severity_score)}</td>
@@ -307,7 +314,7 @@ export default function MyComplaintsPage() {
                       <section className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <DetailItem label="Complaint ID" value={selectedComplaint.complaint_code} />
-                          <DetailItem label="Status" value={toStatusLabel(selectedComplaint.status)} />
+                          <DetailItem label="Status" value={toStatusLabel(complaintDisplayStatus(selectedComplaint))} />
                           <DetailItem label="Incident Date" value={selectedComplaint.incident_date || "N/A"} />
                           <DetailItem label="Severity" value={String(Math.round(selectedComplaint.severity_score))} />
                         </div>

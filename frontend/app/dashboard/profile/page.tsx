@@ -30,6 +30,13 @@ function formatDate(value?: string | null) {
   return new Date(value).toLocaleString();
 }
 
+function complaintDisplayStatus(complaint: ComplaintRecord): "pending" | "resolved" | "rejected" {
+  if (complaint.display_status) return complaint.display_status;
+  if (complaint.status === "resolved") return "resolved";
+  if (complaint.status === "rejected") return "rejected";
+  return "pending";
+}
+
 export default function ProfilePage() {
   const [open, setOpen] = useState(false);
   const { logout, user } = useAuth();
@@ -93,8 +100,8 @@ export default function ProfilePage() {
     passwordMatches &&
     !passwordSubmitting;
 
-  const resolvedCount = complaints.filter((item) => item.status === "resolved").length;
-  const rejectedCount = complaints.filter((item) => item.status === "rejected").length;
+  const resolvedCount = complaints.filter((item) => complaintDisplayStatus(item) === "resolved").length;
+  const rejectedCount = complaints.filter((item) => complaintDisplayStatus(item) === "rejected").length;
 
   const accountCreated = profile?.created_at || null;
   const lastLogin = profile?.last_login || null;

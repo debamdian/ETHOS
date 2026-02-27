@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  BookCheck,
   ClipboardList,
   FileSearch,
   LayoutDashboard,
@@ -18,14 +19,18 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { useAuth } from "@/components/auth/auth-context";
 import {
+  acceptHrCase,
+  fetchHrCaseDetail,
   fetchHrQueue,
+  submitHrCaseDecision,
   getChatMessages,
   initiateChatRequest,
   listEvidenceForComplaint,
   updateHrComplaintStatus,
   type ComplaintRecord,
   type EvidenceRecord,
-  type HrComplaintRecord,
+  type HrQueueRecord,
+  type RejectionType,
 } from "@/lib/auth-api";
 import { getChatSocket } from "@/lib/chat-socket";
 import type { Socket } from "socket.io-client";
@@ -53,6 +58,12 @@ function statusTone(status: ComplaintRecord["status"]) {
   if (status === "resolved") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "rejected") return "border-rose-200 bg-rose-50 text-rose-700";
   return "border-sky-200 bg-sky-50 text-sky-700";
+}
+
+function rejectionTypeLabel(type: RejectionType) {
+  if (type === "insufficient") return "Insufficient Evidence";
+  if (type === "false") return "False Complaint";
+  return "Malicious Complaint";
 }
 
 function priorityLabel(score: number) {
@@ -101,7 +112,7 @@ export default function HrQueuePage() {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
 
-  const [queue, setQueue] = useState<HrComplaintRecord[]>([]);
+  const [queue, setQueue] = useState<HrQueueRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,7 +120,7 @@ export default function HrQueuePage() {
   const [statusFilter, setStatusFilter] = useState<"all" | ComplaintRecord["status"]>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
   const [sortBy, setSortBy] = useState<"latest" | "pending" | "severity">("latest");
-  const [activeComplaint, setActiveComplaint] = useState<HrComplaintRecord | null>(null);
+  const [activeComplaint, setActiveComplaint] = useState<HrQueueRecord | null>(null);
   const [evidenceList, setEvidenceList] = useState<EvidenceRecord[]>([]);
   const [evidenceLoading, setEvidenceLoading] = useState(false);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
@@ -124,9 +135,13 @@ export default function HrQueuePage() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatNotice, setChatNotice] = useState<string | null>(null);
   const [statusDraft, setStatusDraft] = useState<ComplaintRecord["status"]>("submitted");
+  const [rejectionTypeDraft, setRejectionTypeDraft] = useState<RejectionType | "">("");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [statusUpdateError, setStatusUpdateError] = useState<string | null>(null);
   const [statusUpdateNotice, setStatusUpdateNotice] = useState<string | null>(null);
+  const [committeeNotes, setCommitteeNotes] = useState("");
+  const [committeeSubmitLoading, setCommitteeSubmitLoading] = useState(false);
+  const [acceptCaseLoadingCode, setAcceptCaseLoadingCode] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const socketRef = useRef<Socket | null>(null);
   const previousChatStateRef = useRef<ChatState>("not_requested");
@@ -160,6 +175,16 @@ export default function HrQueuePage() {
       label: "Messages",
       href: "/hr/dashboard/messages",
       icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "Notifications",
+      href: "/hr/dashboard/notifications",
+      icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "Compliance",
+      href: "/hr/dashboard/compliance",
+      icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Logout",
@@ -301,8 +326,9 @@ export default function HrQueuePage() {
   }, [currentPage, totalPages]);
 
 
-  const openComplaintModal = async (complaint: HrComplaintRecord) => {
-    setActiveComplaint(complaint);
+  const openComplaintModal = async (complaint: HrQueueRecord) => {
+    setActiveComplaint(null);
+    setError(null);
     setEvidenceList([]);
     setEvidenceError(null);
     setEvidenceLoading(true);
@@ -313,9 +339,22 @@ export default function HrQueuePage() {
     setChatError(null);
     setChatNotice(null);
     setStatusDraft(complaint.status);
+    setRejectionTypeDraft(complaint.rejection_type ?? "");
     setStatusUpdateLoading(false);
     setStatusUpdateError(null);
     setStatusUpdateNotice(null);
+    setCommitteeNotes("");
+
+    try {
+      const detail = await fetchHrCaseDetail(complaint.complaint_code);
+      setActiveComplaint({ ...complaint, ...detail, can_view: complaint.can_view, can_accept: complaint.can_accept });
+      setStatusDraft(detail.status);
+      setRejectionTypeDraft(detail.rejection_type ?? "");
+      setCommitteeNotes("");
+    } catch (err) {
+      setStatusUpdateError(err instanceof Error ? err.message : "Unable to load complaint details.");
+      return;
+    }
 
     try {
       const evidence = await listEvidenceForComplaint(complaint.complaint_code);
@@ -343,6 +382,35 @@ export default function HrQueuePage() {
     }
   };
 
+  const reloadQueue = async () => {
+    const latest = await fetchHrQueue();
+    const safeLatest = Array.isArray(latest) ? latest : [];
+    setQueue(safeLatest);
+    setActiveComplaint((prev) => {
+      if (!prev) return prev;
+      return safeLatest.find((item) => item.complaint_code === prev.complaint_code) || prev;
+    });
+  };
+
+  const handleAcceptCase = async (complaintCode: string) => {
+    setAcceptCaseLoadingCode(complaintCode);
+    setError(null);
+    setStatusUpdateError(null);
+    setStatusUpdateNotice(null);
+
+    try {
+      await acceptHrCase(complaintCode);
+      await reloadQueue();
+      setStatusUpdateNotice("Case accepted. You are now the assigned investigator.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to accept case.";
+      setError(message);
+      setStatusUpdateError(message);
+    } finally {
+      setAcceptCaseLoadingCode(null);
+    }
+  };
+
   const closeComplaintModal = () => {
     if (activeComplaint) {
       socketRef.current?.emit("chat:leave", {
@@ -360,9 +428,11 @@ export default function HrQueuePage() {
     setChatError(null);
     setChatNotice(null);
     setStatusDraft("submitted");
+    setRejectionTypeDraft("");
     setStatusUpdateLoading(false);
     setStatusUpdateError(null);
     setStatusUpdateNotice(null);
+    setCommitteeNotes("");
   };
 
   const handleInviteForChat = async () => {
@@ -397,24 +467,81 @@ export default function HrQueuePage() {
     if (!activeComplaint) return;
     if (statusDraft === activeComplaint.status) return;
 
+    let rejectionType: RejectionType | undefined;
+    if (statusDraft === "rejected") {
+      if (!rejectionTypeDraft) {
+        setStatusUpdateError("Please select a rejection type before marking as Rejected.");
+        return;
+      }
+      rejectionType = rejectionTypeDraft;
+    }
+
     setStatusUpdateLoading(true);
     setStatusUpdateError(null);
     setStatusUpdateNotice(null);
 
     try {
-      const updated = await updateHrComplaintStatus(activeComplaint.complaint_code, statusDraft);
+      const updated = await updateHrComplaintStatus(activeComplaint.complaint_code, statusDraft, rejectionType);
       setQueue((prev) =>
         prev.map((item) =>
-          item.complaint_code === updated.complaint_code ? { ...item, status: updated.status } : item
+          item.complaint_code === updated.complaint_code
+            ? { ...item, status: updated.status, rejection_type: updated.rejection_type ?? null }
+            : item
         )
       );
-      setActiveComplaint((prev) => (prev ? { ...prev, status: updated.status } : prev));
+      setActiveComplaint((prev) =>
+        prev ? { ...prev, status: updated.status, rejection_type: updated.rejection_type ?? null } : prev
+      );
       setStatusDraft(updated.status);
+      setRejectionTypeDraft(updated.rejection_type ?? "");
       setStatusUpdateNotice(`Status updated to ${statusLabel(updated.status)}.`);
     } catch (err) {
       setStatusUpdateError(err instanceof Error ? err.message : "Unable to update complaint status.");
     } finally {
       setStatusUpdateLoading(false);
+    }
+  };
+
+  const handleSubmitDecision = async () => {
+    if (!activeComplaint) return;
+    if (!["resolved", "rejected"].includes(statusDraft)) {
+      setStatusUpdateError("Set status to Resolved or Rejected before sending to committee review.");
+      return;
+    }
+    if (statusDraft === "rejected" && !rejectionTypeDraft) {
+      setStatusUpdateError("Please select a rejection type before sending a rejected case for committee review.");
+      return;
+    }
+    setCommitteeSubmitLoading(true);
+    setStatusUpdateError(null);
+    setStatusUpdateNotice(null);
+    try {
+      if (statusDraft !== activeComplaint.status) {
+        const synced = await updateHrComplaintStatus(
+          activeComplaint.complaint_code,
+          statusDraft,
+          statusDraft === "rejected" ? rejectionTypeDraft : undefined
+        );
+        setQueue((prev) =>
+          prev.map((item) =>
+            item.complaint_code === synced.complaint_code
+              ? { ...item, status: synced.status, rejection_type: synced.rejection_type ?? null }
+              : item
+          )
+        );
+        setActiveComplaint((prev) =>
+          prev ? { ...prev, status: synced.status, rejection_type: synced.rejection_type ?? null } : prev
+        );
+      }
+      await submitHrCaseDecision(activeComplaint.complaint_code, {
+        notes: committeeNotes.trim() || undefined,
+      });
+      await reloadQueue();
+      setStatusUpdateNotice(`Case sent for committee review with status ${statusDraft}.`);
+    } catch (err) {
+      setStatusUpdateError(err instanceof Error ? err.message : "Unable to submit committee review.");
+    } finally {
+      setCommitteeSubmitLoading(false);
     }
   };
 
@@ -558,7 +685,7 @@ export default function HrQueuePage() {
                         <th className="w-[12%] pb-2 pr-2">Priority</th>
                         <th className="w-[14%] pb-2 pr-2">Days Pending</th>
                         <th className="w-[11%] pb-2 pr-2">Severity</th>
-                        <th className="w-[25%] pb-2">Assigned Area</th>
+                        <th className="w-[10%] pb-2">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -566,19 +693,38 @@ export default function HrQueuePage() {
                         return (
                           <tr
                             key={item.id}
-                            onClick={() => void openComplaintModal(item)}
-                            className="cursor-pointer border-b border-slate-100 hover:bg-violet-50/70 last:border-b-0"
+                            onClick={() => {
+                              if (item.can_view) {
+                                void openComplaintModal(item);
+                              }
+                            }}
+                            className={`border-b border-slate-100 last:border-b-0 ${item.can_view ? "cursor-pointer hover:bg-violet-50/70" : "cursor-default"}`}
                           >
                             <td className="py-2 pr-2 font-semibold text-slate-900">{item.complaint_code}</td>
                             <td className="py-2 pr-2">
                               <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${statusTone(item.status)}`}>
-                                {statusLabel(item.status)}
+                                {item.status_label || statusLabel(item.status)}
                               </span>
                             </td>
                             <td className="py-2 pr-2 text-slate-700">{priorityLabel(item.severity_score)}</td>
                             <td className="py-2 pr-2 text-slate-700">{getDaysPending(item.created_at)}</td>
                             <td className="py-2 pr-2 text-slate-700">{item.severity_score}</td>
-                            <td className="py-2 text-slate-700 break-words">{item.location || "Unassigned"}</td>
+                            <td className="py-2">
+                              {item.can_accept ? (
+                                <button
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void handleAcceptCase(item.complaint_code);
+                                  }}
+                                  disabled={acceptCaseLoadingCode === item.complaint_code}
+                                  className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                                >
+                                  {acceptCaseLoadingCode === item.complaint_code ? "Accepting..." : "Accept Case"}
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-400">-</span>
+                              )}
+                            </td>
                           </tr>
                         );
                       })}
@@ -668,11 +814,28 @@ export default function HrQueuePage() {
                 <InfoRow label="Accused Hash" value={activeComplaint.accused_employee_hash} breakValue />
 
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  {activeComplaint.can_accept ? (
+                    <div className="mb-2">
+                      <button
+                        onClick={() => void handleAcceptCase(activeComplaint.complaint_code)}
+                        disabled={acceptCaseLoadingCode === activeComplaint.complaint_code}
+                        className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                      >
+                        {acceptCaseLoadingCode === activeComplaint.complaint_code ? "Accepting..." : "Accept Case"}
+                      </button>
+                    </div>
+                  ) : null}
                   <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Update Status</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <select
                       value={statusDraft}
-                      onChange={(event) => setStatusDraft(event.target.value as ComplaintRecord["status"])}
+                      onChange={(event) => {
+                        const nextStatus = event.target.value as ComplaintRecord["status"];
+                        setStatusDraft(nextStatus);
+                        if (nextStatus !== "rejected") {
+                          setRejectionTypeDraft("");
+                        }
+                      }}
                       disabled={statusUpdateLoading}
                       className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none disabled:opacity-60"
                     >
@@ -681,6 +844,19 @@ export default function HrQueuePage() {
                       <option value="resolved">Resolved</option>
                       <option value="rejected">Rejected</option>
                     </select>
+                    {statusDraft === "rejected" ? (
+                      <select
+                        value={rejectionTypeDraft}
+                        onChange={(event) => setRejectionTypeDraft(event.target.value as RejectionType | "")}
+                        disabled={statusUpdateLoading}
+                        className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none disabled:opacity-60"
+                      >
+                        <option value="">Select rejection type</option>
+                        <option value="insufficient">{rejectionTypeLabel("insufficient")}</option>
+                        <option value="false">{rejectionTypeLabel("false")}</option>
+                        <option value="malicious">{rejectionTypeLabel("malicious")}</option>
+                      </select>
+                    ) : null}
 
                     <button
                       onClick={handleUpdateComplaintStatus}
@@ -701,6 +877,28 @@ export default function HrQueuePage() {
                     </p>
                   ) : null}
                 </div>
+                {activeComplaint.workflow_status === "in_progress" ? (
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Send To Committee Review</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => void handleSubmitDecision()}
+                        disabled={committeeSubmitLoading || !["resolved", "rejected"].includes(statusDraft)}
+                        className="rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-600 disabled:opacity-60"
+                      >
+                        {committeeSubmitLoading ? "Submitting..." : "Submit For Review"}
+                      </button>
+                    </div>
+                    <textarea
+                      value={committeeNotes}
+                      onChange={(event) => setCommitteeNotes(event.target.value)}
+                      disabled={committeeSubmitLoading}
+                      maxLength={5000}
+                      placeholder="Optional notes for committee review"
+                      className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                    />
+                  </div>
+                ) : null}
               </section>
 
               <section className="rounded-xl border border-slate-200 bg-white p-3">

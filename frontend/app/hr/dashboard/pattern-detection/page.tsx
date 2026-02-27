@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  BookCheck,
   ClipboardList,
   FileSearch,
   LayoutDashboard,
@@ -22,21 +23,25 @@ import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { useAuth } from "@/components/auth/auth-context";
 import {
   fetchPatternDetectionAccusedBreakdown,
+  fetchPatternDetectionAccusedComplaints,
   fetchPatternDetectionCredibilityRisk,
   fetchPatternDetectionDepartmentRisk,
   fetchPatternDetectionInsights,
   fetchPatternDetectionOverview,
   fetchPatternDetectionRepeatOffenders,
   fetchPatternDetectionRiskAcceleration,
+  fetchPatternDetectionSuspiciousClusters,
   fetchPatternDetectionTargetingAlerts,
   fetchPatternDetectionTimeTrends,
   type AccusedBreakdownRecord,
+  type AccusedComplaintRecord,
   type DepartmentRiskRecord,
   type PatternDetectionOverview,
   type PatternInsightMessage,
   type PatternTimeTrendRecord,
   type RepeatOffenderRecord,
   type RiskAccelerationRecord,
+  type SuspiciousClusterRecord,
   type SuspiciousComplainantRecord,
   type TargetingAlertRecord,
 } from "@/lib/auth-api";
@@ -107,6 +112,20 @@ function lineChartPath(
     .join(" ");
 }
 
+function complaintStatusLabel(status: AccusedComplaintRecord["status"]) {
+  if (status === "under_review") return "Under Review";
+  if (status === "resolved") return "Resolved";
+  if (status === "rejected") return "Rejected";
+  return "Submitted";
+}
+
+function complaintStatusClass(status: AccusedComplaintRecord["status"]) {
+  if (status === "under_review") return "border-amber-200 bg-amber-50 text-amber-700";
+  if (status === "resolved") return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  if (status === "rejected") return "border-red-200 bg-red-50 text-red-700";
+  return "border-sky-200 bg-sky-50 text-sky-700";
+}
+
 export default function HrPatternDetectionPage() {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
@@ -122,6 +141,11 @@ export default function HrPatternDetectionPage() {
   const [credibilityRisk, setCredibilityRisk] = useState<SuspiciousComplainantRecord[]>([]);
   const [insights, setInsights] = useState<PatternInsightMessage[]>([]);
   const [riskAcceleration, setRiskAcceleration] = useState<RiskAccelerationRecord[]>([]);
+  const [suspiciousClusters, setSuspiciousClusters] = useState<SuspiciousClusterRecord[]>([]);
+  const [selectedClusterAccusedHash, setSelectedClusterAccusedHash] = useState<string | null>(null);
+  const [accusedComplaints, setAccusedComplaints] = useState<AccusedComplaintRecord[]>([]);
+  const [accusedComplaintsLoading, setAccusedComplaintsLoading] = useState(false);
+  const [accusedComplaintsError, setAccusedComplaintsError] = useState<string | null>(null);
 
   const [expandedAccused, setExpandedAccused] = useState<string | null>(null);
   const [breakdownLoading, setBreakdownLoading] = useState(false);
@@ -138,7 +162,8 @@ export default function HrPatternDetectionPage() {
       timeTrends.length > 0 ||
       credibilityRisk.length > 0 ||
       insights.length > 0 ||
-      riskAcceleration.length > 0,
+      riskAcceleration.length > 0 ||
+      suspiciousClusters.length > 0,
     [
       overview,
       repeatOffenders,
@@ -148,6 +173,7 @@ export default function HrPatternDetectionPage() {
       credibilityRisk,
       insights,
       riskAcceleration,
+      suspiciousClusters,
     ]
   );
 
@@ -176,6 +202,11 @@ export default function HrPatternDetectionPage() {
       label: "Messages",
       href: "/hr/dashboard/messages",
       icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "Compliance",
+      href: "/hr/dashboard/compliance",
+      icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Logout",
@@ -313,6 +344,7 @@ export default function HrPatternDetectionPage() {
             fetchPatternDetectionCredibilityRisk(),
             fetchPatternDetectionInsights(),
             fetchPatternDetectionRiskAcceleration(),
+            fetchPatternDetectionSuspiciousClusters(),
           ]))
         );
 
@@ -329,6 +361,7 @@ export default function HrPatternDetectionPage() {
         setCredibilityRisk(Array.isArray(resolved(5)) ? (resolved(5) as SuspiciousComplainantRecord[]) : []);
         setInsights(Array.isArray(resolved(6)) ? (resolved(6) as PatternInsightMessage[]) : []);
         setRiskAcceleration(Array.isArray(resolved(7)) ? (resolved(7) as RiskAccelerationRecord[]) : []);
+        setSuspiciousClusters(Array.isArray(resolved(8)) ? (resolved(8) as SuspiciousClusterRecord[]) : []);
 
         const failedCount = results.filter((item) => item.status === "rejected").length;
         if (failedCount > 0) {
@@ -367,6 +400,29 @@ export default function HrPatternDetectionPage() {
     } finally {
       setBreakdownLoading(false);
     }
+  }
+
+  async function openAccusedComplaintsModal(accusedHash: string) {
+    setSelectedClusterAccusedHash(accusedHash);
+    setAccusedComplaints([]);
+    setAccusedComplaintsError(null);
+    setAccusedComplaintsLoading(true);
+
+    try {
+      const data = await fetchPatternDetectionAccusedComplaints(accusedHash);
+      setAccusedComplaints(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setAccusedComplaintsError(err instanceof Error ? err.message : "Unable to load complaints.");
+    } finally {
+      setAccusedComplaintsLoading(false);
+    }
+  }
+
+  function closeAccusedComplaintsModal() {
+    setSelectedClusterAccusedHash(null);
+    setAccusedComplaints([]);
+    setAccusedComplaintsLoading(false);
+    setAccusedComplaintsError(null);
   }
 
   return (
@@ -676,6 +732,64 @@ export default function HrPatternDetectionPage() {
           </section>
 
           <section className="mt-4 grid gap-4 xl:grid-cols-2">
+            <article className="rounded-2xl border border-slate-200 bg-white p-5 xl:col-span-2">
+              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">Suspicious Clusters</h2>
+              <div className="mt-3 max-h-80 overflow-auto">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-xs uppercase tracking-[0.1em] text-slate-500">
+                      <th className="pb-2">Accused Hash</th>
+                      <th className="pb-2">Suspicion Score</th>
+                      <th className="pb-2">Diversity Index</th>
+                      <th className="pb-2">Unique Devices</th>
+                      <th className="pb-2">Similarity Count</th>
+                      <th className="pb-2">Complaint Links</th>
+                      <th className="pb-2">Review Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suspiciousClusters.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-3 text-slate-600">
+                          No suspicious clusters detected yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      suspiciousClusters.map((row) => (
+                        <tr
+                          key={row.id}
+                          onClick={() => {
+                            void openAccusedComplaintsModal(row.accused_employee_hash);
+                          }}
+                          className="cursor-pointer border-b border-slate-100 transition hover:bg-slate-50 last:border-b-0"
+                        >
+                          <td className="py-2.5 font-semibold text-slate-900">{row.accused_employee_hash}</td>
+                          <td className="py-2.5 text-slate-700">{row.cluster_suspicion_score}</td>
+                          <td className="py-2.5 text-slate-700">{row.diversity_index}</td>
+                          <td className="py-2.5 text-slate-700">{row.unique_device_count}</td>
+                          <td className="py-2.5 text-slate-700">{row.similarity_cluster_count}</td>
+                          <td className="py-2.5 text-slate-700">{row.complaint_ids.length}</td>
+                          <td className="py-2.5">
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                                row.review_status === "pending"
+                                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                                  : row.review_status === "reviewed"
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-slate-300 bg-slate-50 text-slate-700"
+                              }`}
+                            >
+                              {row.review_status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
             <article className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">Suspicious Complainants</h2>
               <div className="mt-3 max-h-80 overflow-auto">
@@ -760,6 +874,74 @@ export default function HrPatternDetectionPage() {
           )}
         </section>
       </div>
+
+      {selectedClusterAccusedHash ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+          <div className="max-h-[88vh] w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Accused Complaints</p>
+                <p className="text-sm font-semibold text-slate-900">{selectedClusterAccusedHash}</p>
+              </div>
+              <button
+                onClick={closeAccusedComplaintsModal}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[72vh] overflow-auto p-4">
+              {accusedComplaintsLoading ? (
+                <p className="text-sm text-slate-600">Loading complaints...</p>
+              ) : accusedComplaintsError ? (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {accusedComplaintsError}
+                </p>
+              ) : accusedComplaints.length === 0 ? (
+                <p className="text-sm text-slate-600">No complaints found for this accused entry.</p>
+              ) : (
+                <table className="w-full min-w-[900px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-xs uppercase tracking-[0.1em] text-slate-500">
+                      <th className="pb-2">Complaint Code</th>
+                      <th className="pb-2">Status</th>
+                      <th className="pb-2">Severity</th>
+                      <th className="pb-2">Incident Date</th>
+                      <th className="pb-2">Evidence</th>
+                      <th className="pb-2">Verdict</th>
+                      <th className="pb-2">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accusedComplaints.map((complaint) => (
+                      <tr key={complaint.id} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-2.5 font-semibold text-slate-900">{complaint.complaint_code}</td>
+                        <td className="py-2.5">
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${complaintStatusClass(
+                              complaint.status
+                            )}`}
+                          >
+                            {complaintStatusLabel(complaint.status)}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-slate-700">{complaint.severity_score}</td>
+                        <td className="py-2.5 text-slate-700">{complaint.incident_date || "N/A"}</td>
+                        <td className="py-2.5 text-slate-700">{complaint.evidence_count}</td>
+                        <td className="py-2.5 text-slate-700">{complaint.verdict || "Pending"}</td>
+                        <td className="py-2.5 text-slate-700">
+                          {new Date(complaint.created_at).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
