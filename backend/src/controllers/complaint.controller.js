@@ -135,6 +135,22 @@ async function updateComplaintStatus(req, res, next) {
       throw new ApiError(403, 'Only assigned investigator can update this case status');
     }
 
+    const nextStatus = req.body.status;
+    const normalizedRejectionType = normalizeRejectionType(req.body.rejection_type);
+    const allowedRejectionTypes = ['insufficient', 'false', 'malicious'];
+    if (normalizedRejectionType && !allowedRejectionTypes.includes(normalizedRejectionType)) {
+      throw new ApiError(400, 'Invalid rejection_type value');
+    }
+    if (nextStatus === 'rejected' && !normalizedRejectionType) {
+      throw new ApiError(400, 'rejection_type is required when status is rejected');
+    }
+
+    const updated = await complaintModel.updateStatusByHr(
+      req.params.complaintId,
+      nextStatus,
+      nextStatus === 'rejected' ? normalizedRejectionType : null
+    );
+
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Complaint not found' });
     }
@@ -143,7 +159,7 @@ async function updateComplaintStatus(req, res, next) {
       actorUserId: req.user.id,
       action: 'complaint.status.update',
       userType: toUserType(req.user.role),
-      metadata: { complaintCode: updated.complaint_code, status: req.body.status },
+      metadata: { complaintCode: updated.complaint_code, status: nextStatus },
     });
 
     return res.json({ success: true, data: updated });

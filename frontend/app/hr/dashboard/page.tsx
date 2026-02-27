@@ -100,6 +100,11 @@ export default function HrDashboardPage() {
       icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
+      label: "Notifications",
+      href: "/hr/dashboard/notifications",
+      icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
       label: "Compliance",
       href: "/hr/dashboard/compliance",
       icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,

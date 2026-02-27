@@ -65,11 +65,18 @@ router.get('/pattern-detection/time-trends', patternDetectionController.timeTren
 router.get('/pattern-detection/credibility-risk', patternDetectionController.credibilityRisk);
 router.get('/pattern-detection/insights', patternDetectionController.insights);
 router.get('/pattern-detection/risk-acceleration', patternDetectionController.riskAcceleration);
+router.get('/pattern-detection/suspicious-clusters', patternDetectionController.suspiciousClusters);
 router.get(
   '/pattern-detection/accused/:accusedHash/breakdown',
   param('accusedHash').isString().isLength({ min: 3, max: 255 }),
   validateRequest,
   patternDetectionController.accusedBreakdown
+);
+router.get(
+  '/pattern-detection/accused/:accusedHash/complaints',
+  param('accusedHash').isString().isLength({ min: 3, max: 255 }),
+  validateRequest,
+  patternDetectionController.accusedComplaints
 );
 
 router.put(

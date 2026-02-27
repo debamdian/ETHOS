@@ -15,6 +15,7 @@ import {
   Minus,
   Settings2,
   ShieldCheck,
+  TriangleAlert,
   TrendingDown,
   TrendingUp,
   Users,
@@ -208,6 +209,11 @@ export default function HrPatternDetectionPage() {
       label: "Messages",
       href: "/hr/dashboard/messages",
       icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+    },
+    {
+      label: "Notifications",
+      href: "/hr/dashboard/notifications",
+      icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Compliance",

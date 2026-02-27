@@ -469,39 +469,6 @@ export default function HrQueuePage() {
     }
   };
 
-  const handleUpdateComplaintStatus = async () => {
-    if (!activeComplaint) return;
-    if (statusDraft === activeComplaint.status) return;
-
-    let rejectionType: RejectionType | undefined;
-    if (statusDraft === "rejected") {
-      if (!rejectionTypeDraft) {
-        setStatusUpdateError("Please select a rejection type before marking as Rejected.");
-        return;
-      }
-      rejectionType = rejectionTypeDraft;
-    }
-
-    setStatusUpdateLoading(true);
-    setStatusUpdateError(null);
-    setStatusUpdateNotice(null);
-
-    try {
-      const updated = await updateHrComplaintStatus(activeComplaint.complaint_code, statusDraft, rejectionType);
-      await reloadQueue();
-      setStatusDraft(updated.status);
-      setRejectionTypeDraft(updated.rejection_type ?? "");
-      setStatusUpdateNotice(`Status updated to ${statusLabel(updated.status)}.`);
-      if (["resolved", "rejected"].includes(updated.status)) {
-        closeComplaintModal();
-      }
-    } catch (err) {
-      setStatusUpdateError(err instanceof Error ? err.message : "Unable to update complaint status.");
-    } finally {
-      setStatusUpdateLoading(false);
-    }
-  };
-
   const handleSubmitDecision = async () => {
     if (!activeComplaint) return;
     if (!["resolved", "rejected"].includes(statusDraft)) {
@@ -856,13 +823,6 @@ export default function HrQueuePage() {
                       </select>
                     ) : null}
 
-                    <button
-                      onClick={handleUpdateComplaintStatus}
-                      disabled={statusUpdateLoading || statusDraft === activeComplaint.status}
-                      className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {statusUpdateLoading ? "Updating..." : "Update Status"}
-                    </button>
                   </div>
                   {statusUpdateError ? (
                     <p className="mt-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
