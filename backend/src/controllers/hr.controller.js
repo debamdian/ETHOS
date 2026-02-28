@@ -1,6 +1,7 @@
 const complaintModel = require('../models/complaint.model');
 const verdictModel = require('../models/verdict.model');
 const accusedModel = require('../models/accused.model');
+const complaintAuditModel = require('../models/complaintAudit.model');
 const { decryptFields } = require('../services/encryption.service');
 const { logAuditEvent } = require('../services/audit.service');
 const { logComplaintAction } = require('../services/complaintAudit.service');
@@ -675,6 +676,35 @@ async function patternInsights(req, res, next) {
   }
 }
 
+async function complaintAuditLogs(req, res, next) {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search ? String(req.query.search) : '';
+    const actionType = req.query.action_type ? String(req.query.action_type) : '';
+    const rawHrId = req.query.hr_id ? String(req.query.hr_id) : '';
+    const hrId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawHrId)
+      ? rawHrId
+      : '';
+
+    const data = await complaintAuditModel.listComplaintAuditLogs({
+      page,
+      limit,
+      search,
+      actionType,
+      hrId,
+    });
+    return res.json({
+      success: true,
+      data: data.rows,
+      pagination: data.pagination,
+      filters: data.filters,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   queue,
   history,
@@ -691,4 +721,5 @@ module.exports = {
   getVerdict,
   accusedPatterns,
   patternInsights,
+  complaintAuditLogs,
 };

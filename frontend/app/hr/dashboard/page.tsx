@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
-  BookCheck,
   ClipboardList,
   FileSearch,
   History,
@@ -105,9 +104,9 @@ export default function HrDashboardPage() {
       icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
-      label: "Compliance",
-      href: "/hr/dashboard/compliance",
-      icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
+      label: "Logs",
+      href: "/hr/dashboard/logs",
+      icon: <ShieldCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" />,
     },
     {
       label: "Logout",

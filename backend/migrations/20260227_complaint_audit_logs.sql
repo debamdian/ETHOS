@@ -16,6 +16,9 @@ CREATE INDEX IF NOT EXISTS idx_complaint_audit_logs_complaint_created
 CREATE INDEX IF NOT EXISTS idx_complaint_audit_logs_hr_action_created
   ON complaint_audit_logs (hr_id, action_type, created_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_complaint_audit_logs_created_at
+  ON complaint_audit_logs (created_at DESC);
+
 CREATE OR REPLACE FUNCTION prevent_complaint_audit_logs_mutation()
 RETURNS trigger
 LANGUAGE plpgsql

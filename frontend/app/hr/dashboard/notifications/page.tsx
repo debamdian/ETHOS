@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  BookCheck,
   ClipboardList,
   FileSearch,
   History,
@@ -73,7 +72,7 @@ export default function HrNotificationsPage() {
     { label: "Pattern Detection", href: "/hr/dashboard/pattern-detection", icon: <Users className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Messages", href: "/hr/dashboard/messages", icon: <MessageSquare className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Notifications", href: "/hr/dashboard/notifications", icon: <TriangleAlert className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
-    { label: "Compliance", href: "/hr/dashboard/compliance", icon: <BookCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
+    { label: "Logs", href: "/hr/dashboard/logs", icon: <ShieldCheck className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
     { label: "Logout", href: "#", onClick: logout, icon: <LogOut className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-200" /> },
   ];
 

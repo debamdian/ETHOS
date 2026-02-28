@@ -216,6 +216,37 @@ export type HrDepartmentRiskRecord = {
   total: number;
 };
 
+export type ComplaintAuditLogRecord = {
+  id: string;
+  complaint_id: string;
+  complaint_code: string;
+  hr_id: string;
+  hr_name: string;
+  action_type:
+    | "CASE_ACCEPTED"
+    | "DETAILS_VIEWED"
+    | "STATUS_UPDATED"
+    | "DECISION_SUBMITTED"
+    | "VOTE_VIEWED"
+    | "VOTE_CAST"
+    | string;
+  metadata: Record<string, unknown>;
+  ip_address: string | null;
+  created_at: string;
+};
+
+export type PaginationResult = {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+};
+
+export type ComplaintAuditLogFilters = {
+  action_types: string[];
+  hr_users: Array<{ id: string; name: string }>;
+};
+
 export type PatternDetectionOverview = {
   escalation_index: {
     current_count: number;
@@ -668,6 +699,31 @@ export async function fetchHrQueue() {
 export async function fetchHrHistory() {
   const result = await request<{ success: boolean; data: HrQueueRecord[] }>("/hr/history");
   return result.data;
+}
+
+export async function fetchHrComplaintAuditLogs(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  actionType?: string;
+  hrId?: string;
+}) {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.search && params.search.trim().length > 0) query.set("search", params.search.trim());
+  if (params?.actionType && params.actionType.trim().length > 0) query.set("action_type", params.actionType.trim());
+  if (params?.hrId && params.hrId.trim().length > 0) query.set("hr_id", params.hrId.trim());
+  const suffix = query.toString().length > 0 ? `?${query.toString()}` : "";
+
+  return request<{
+    success: boolean;
+    data: ComplaintAuditLogRecord[];
+    pagination: PaginationResult;
+    filters: ComplaintAuditLogFilters;
+  }>(
+    `/hr/logs${suffix}`
+  );
 }
 
 export async function acceptHrCase(complaintReference: string) {

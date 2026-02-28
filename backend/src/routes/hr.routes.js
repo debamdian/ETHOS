@@ -14,6 +14,7 @@ router.use(requireRole('hr', 'committee', 'admin'));
 
 router.get('/queue', hrController.queue);
 router.get('/history', hrController.history);
+router.get('/logs', hrController.complaintAuditLogs);
 router.get('/notifications', hrController.listNotifications);
 router.get(
   '/notifications/:complaintId',
