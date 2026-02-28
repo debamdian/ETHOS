@@ -4,8 +4,10 @@ const generateComplaintId = require('../utils/generateComplaintId');
 const { encryptFields, decryptFields } = require('../services/encryption.service');
 const { scoreCredibility } = require('../services/credibility.service');
 const { logAuditEvent } = require('../services/audit.service');
+const { logComplaintAction } = require('../services/complaintAudit.service');
 const { ApiError } = require('../middlewares/error.middleware');
 const { canViewFullComplaint, resolveWorkflowStatus } = require('../services/caseAccess.service');
+const logger = require('../utils/logger');
 
 const STRONG_EVIDENCE_MIN_FILES = 2;
 const { evaluateAndPersistSuspiciousCluster } = require('../services/suspiciousCluster.service');
@@ -117,6 +119,24 @@ async function getComplaint(req, res, next) {
       responseData = sanitizeForRestrictedHr(decrypted);
     }
 
+    if (['hr', 'committee', 'admin'].includes(req.user.role) && canViewFullComplaint(complaint, req.user)) {
+      try {
+        await logComplaintAction({
+          complaintId: complaint.id,
+          hrId: req.user.id,
+          actionType: 'DETAILS_VIEWED',
+          metadata: {},
+          ipAddress: req.ip || null,
+        });
+      } catch (logErr) {
+        logger.warn('Failed to write complaint details-viewed audit log', {
+          complaintId: complaint.id,
+          hrId: req.user.id,
+          error: logErr instanceof Error ? logErr.message : String(logErr),
+        });
+      }
+    }
+
     return res.json({ success: true, data: decrypted });
   } catch (err) {
     return next(err);
@@ -161,6 +181,25 @@ async function updateComplaintStatus(req, res, next) {
       userType: toUserType(req.user.role),
       metadata: { complaintCode: updated.complaint_code, status: nextStatus },
     });
+
+    try {
+      await logComplaintAction({
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        actionType: 'STATUS_UPDATED',
+        metadata: {
+          old_status: complaint.status,
+          new_status: updated.status,
+        },
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write complaint status-updated audit log', {
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
 
     return res.json({ success: true, data: updated });
   } catch (err) {

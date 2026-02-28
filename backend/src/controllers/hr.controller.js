@@ -3,7 +3,9 @@ const verdictModel = require('../models/verdict.model');
 const accusedModel = require('../models/accused.model');
 const { decryptFields } = require('../services/encryption.service');
 const { logAuditEvent } = require('../services/audit.service');
+const { logComplaintAction } = require('../services/complaintAudit.service');
 const { ApiError } = require('../middlewares/error.middleware');
+const logger = require('../utils/logger');
 const {
   canViewFullComplaint,
   canSubmitInvestigatorDecision,
@@ -156,6 +158,23 @@ async function notificationDetail(req, res, next) {
 
     const decrypted = decryptFields(complaint, ['description', 'location']);
     const { anon_user_id, ...rest } = decrypted;
+
+    try {
+      await logComplaintAction({
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        actionType: 'VOTE_VIEWED',
+        metadata: {},
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write vote-viewed audit log', {
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
+
     return res.json({
       success: true,
       data: {
@@ -195,6 +214,23 @@ async function caseDetail(req, res, next) {
 
     const decrypted = decryptFields(complaint, ['description', 'location']);
     const { anon_user_id, ...rest } = decrypted;
+
+    try {
+      await logComplaintAction({
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        actionType: 'DETAILS_VIEWED',
+        metadata: {},
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write details-viewed audit log', {
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
+
     return res.json({
       success: true,
       data: {
@@ -220,6 +256,22 @@ async function acceptCase(req, res, next) {
       userType: 'hr',
       metadata: { complaintCode: accepted.complaint_code },
     });
+
+    try {
+      await logComplaintAction({
+        complaintId: accepted.id,
+        hrId: req.user.id,
+        actionType: 'CASE_ACCEPTED',
+        metadata: {},
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write case-accepted audit log', {
+        complaintId: accepted.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
 
     return res.json({
       success: true,
@@ -259,6 +311,24 @@ async function submitInvestigatorDecision(req, res, next) {
       userType: 'hr',
       metadata: { complaintCode: updated.complaint_code, status: updated.status },
     });
+
+    try {
+      await logComplaintAction({
+        complaintId: updated.id,
+        hrId: req.user.id,
+        actionType: 'DECISION_SUBMITTED',
+        metadata: {
+          decision: updated.status,
+        },
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write decision-submitted audit log', {
+        complaintId: updated.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
 
     return res.json({
       success: true,
@@ -305,6 +375,24 @@ async function castCommitteeVote(req, res, next) {
         finalized: Boolean(outcome.finalized),
       },
     });
+
+    try {
+      await logComplaintAction({
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        actionType: 'VOTE_CAST',
+        metadata: {
+          vote: req.body.vote,
+        },
+        ipAddress: req.ip || null,
+      });
+    } catch (logErr) {
+      logger.warn('Failed to write vote-cast audit log', {
+        complaintId: complaint.id,
+        hrId: req.user.id,
+        error: logErr instanceof Error ? logErr.message : String(logErr),
+      });
+    }
 
     return res.json({
       success: true,

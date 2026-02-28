@@ -30,6 +30,18 @@ CREATE TABLE public.audit_logs (
   created_at timestamp without time zone DEFAULT now(),
   CONSTRAINT audit_logs_pkey PRIMARY KEY (id)
 );
+CREATE TABLE public.complaint_audit_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  complaint_id uuid NOT NULL,
+  hr_id uuid NOT NULL,
+  action_type text NOT NULL,
+  metadata jsonb,
+  ip_address text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT complaint_audit_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT complaint_audit_logs_complaint_id_fkey FOREIGN KEY (complaint_id) REFERENCES public.complaints(id),
+  CONSTRAINT complaint_audit_logs_hr_id_fkey FOREIGN KEY (hr_id) REFERENCES public.hr_users(id)
+);
 CREATE TABLE public.chat_messages (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   thread_id uuid NOT NULL,
