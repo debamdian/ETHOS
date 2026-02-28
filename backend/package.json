@@ -26,11 +26,13 @@
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "next-auth": "^4.24.13",
     "openai": "^6.22.0",
     "pdf-parse": "^2.4.5",
     "pinecone": "^0.1.0",
     "postgres": "^3.4.7",
     "rate-limiter-flexible": "^8.1.0",
+    "resend": "^6.9.3",
     "socket.io": "^4.8.3",
     "winston": "^3.18.3"
   },

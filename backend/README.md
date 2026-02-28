@@ -68,6 +68,8 @@ All variables are in `.env.example`. Required values include:
 - `ENCRYPTION_KEY` (64 hex chars for AES-256-GCM)
 - `CLIENT_ORIGIN` (comma-separated list allowed)
 - `MAX_FILE_SIZE_MB`
+- `RESEND_API_KEY`, `HR_OTP_FROM_EMAIL`, `HR_OTP_EMAIL_SUBJECT` (HR OTP delivery via Resend)
+- `HR_OTP_EXPOSE_IN_RESPONSE` (optional debug flag to expose OTP codes in non-production)
 
 ## API Routes
 Base prefix is `API_PREFIX` (default `/api/v1`).
