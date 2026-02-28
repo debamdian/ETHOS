@@ -35,7 +35,6 @@ export default function LandingPage() {
             <nav className="hidden lg:flex items-center gap-10 text-[13px] font-bold uppercase tracking-widest text-muted-foreground/80">
               <Link href="/safety-guide" className="hover:text-primary transition-colors">Safety Guide</Link>
               <Link href="/legal-framework" className="hover:text-primary transition-colors">Legal Framework</Link>
-              <Link href={hrHref} className="hover:text-primary transition-colors">For HR</Link>
             </nav>
             <div className="h-6 w-px bg-foreground/[0.08] hidden lg:block" />
             <div className="flex items-center gap-5">
@@ -238,30 +237,31 @@ export default function LandingPage() {
 
       <footer className="border-t border-foreground/[0.03] py-24 bg-background/50 relative overflow-hidden mt-40">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-24 mb-24">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-8">
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-2 mb-24">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
                 <span className="font-extrabold text-2xl tracking-tighter font-logo">ETHOS</span>
               </div>
-              <p className="text-muted-foreground max-w-sm text-lg font-medium leading-relaxed mb-12 italic opacity-80">
+              <p className="text-muted-foreground max-w-sm text-lg font-medium leading-relaxed italic opacity-80">
                 The global infrastructure for anonymous institutional reporting. Built for safety, defined by integrity.
               </p>
+              <div className="mt-8 space-y-3">
+                <h4 className="font-bold text-[11px] uppercase tracking-[0.2em] text-foreground/40">Contact</h4>
+                <p className="text-sm text-muted-foreground">
+                  For partnership or compliance inquiries reach out at
+                  <a className="text-primary hover:underline ml-1" href="mailto:ethos@mimosa.chat">ethos@mimosa.chat</a>.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold mb-8 text-[11px] uppercase tracking-[0.2em] text-foreground/40">Infrastructure</h4>
-              <ul className="space-y-5 font-bold text-sm tracking-tight text-muted-foreground uppercase opacity-70">
-                <li><a href="#" className="hover:text-primary transition-colors">Neural Security</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Privacy Shield</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Audit V2.4</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-8 text-[11px] uppercase tracking-[0.2em] text-foreground/40">Compliance</h4>
-              <ul className="space-y-5 font-bold text-sm tracking-tight text-muted-foreground uppercase opacity-70">
-                <li><a href="#" className="hover:text-primary transition-colors">EU Protection</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Legal Framework</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Safety Matrix</a></li>
-              </ul>
+            <div className="rounded-[34px] border border-foreground/5 bg-gradient-to-br from-white/60 via-primary/5 to-accent/5 p-10 text-left shadow-[0_25px_90px_rgba(15,23,42,0.08)] dark:from-foreground/10 dark:via-primary/10 dark:to-accent/10">
+              <p className="text-xs font-semibold uppercase tracking-[0.45em] text-muted-foreground">Stay aligned</p>
+              <h3 className="mt-4 text-2xl font-semibold text-foreground">Weekly Privacy Briefings</h3>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                Get a concise signal on regulatory shifts, ETHOS capabilities, and ready-to-use trust playbooks—never noise, never spam.
+              </p>
+              <button className="mt-6 inline-flex items-center justify-center rounded-full bg-primary/90 px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-primary">
+                Join list
+              </button>
             </div>
           </div>
           <div className="pt-12 border-t border-foreground/[0.03] flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.3em] opacity-30">
