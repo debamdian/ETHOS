@@ -120,7 +120,7 @@ export default function HrQueuePage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | ComplaintRecord["status"]>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
-  const [sortBy, setSortBy] = useState<"latest" | "pending" | "severity">("latest");
+  const [sortBy, setSortBy] = useState<"latest" | "pending" | "severity" | "credibility">("latest");
   const [activeComplaint, setActiveComplaint] = useState<HrQueueRecord | null>(null);
   const [evidenceList, setEvidenceList] = useState<EvidenceRecord[]>([]);
   const [evidenceLoading, setEvidenceLoading] = useState(false);
@@ -308,6 +308,7 @@ export default function HrQueuePage() {
     rows.sort((a, b) => {
       if (sortBy === "severity") return b.severity_score - a.severity_score;
       if (sortBy === "pending") return getDaysPending(b.created_at) - getDaysPending(a.created_at);
+      if (sortBy === "credibility") return (b.credibility_score || 0) - (a.credibility_score || 0);
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -637,6 +638,7 @@ export default function HrQueuePage() {
                       <option value="latest">Latest</option>
                       <option value="pending">Most Pending</option>
                       <option value="severity">Highest Severity</option>
+                      <option value="credibility">Highest Credibility</option>
                     </select>
                   </div>
                 </div>
@@ -649,6 +651,7 @@ export default function HrQueuePage() {
                         <th className="w-[18%] pb-2 pr-2">Status</th>
                         <th className="w-[12%] pb-2 pr-2">Priority</th>
                         <th className="w-[14%] pb-2 pr-2">Days Pending</th>
+                        <th className="w-[10%] pb-2 pr-2">Credibility</th>
                         <th className="w-[11%] pb-2 pr-2">Severity</th>
                         <th className="w-[10%] pb-2">Action</th>
                       </tr>
@@ -673,6 +676,7 @@ export default function HrQueuePage() {
                             </td>
                             <td className="py-2 pr-2 text-slate-700">{priorityLabel(item.severity_score)}</td>
                             <td className="py-2 pr-2 text-slate-700">{getDaysPending(item.created_at)}</td>
+                            <td className="py-2 pr-2 text-slate-700">{Math.round(item.credibility_score || 0)}</td>
                             <td className="py-2 pr-2 text-slate-700">{item.severity_score}</td>
                             <td className="py-2">
                               {item.can_accept ? (
@@ -696,7 +700,7 @@ export default function HrQueuePage() {
 
                       {!loading && filteredQueue.length === 0 ? (
                         <tr>
-                          <td className="py-4 text-slate-600" colSpan={6}>
+                          <td className="py-4 text-slate-600" colSpan={7}>
                             No queue items found for selected filters.
                           </td>
                         </tr>
@@ -774,6 +778,7 @@ export default function HrQueuePage() {
                 <InfoRow label="Status" value={statusLabel(activeComplaint.status)} />
                 <InfoRow label="Priority" value={priorityLabel(activeComplaint.severity_score)} />
                 <InfoRow label="Days Pending" value={String(getDaysPending(activeComplaint.created_at))} />
+                <InfoRow label="Credibility Score" value={String(Math.round(activeComplaint.credibility_score || 0))} />
                 <InfoRow label="Incident Date" value={formatDate(activeComplaint.incident_date)} />
                 <InfoRow label="Location / Dept" value={safeLocation(activeComplaint.location)} />
                 <InfoRow label="Accused Hash" value={activeComplaint.accused_employee_hash} breakValue />

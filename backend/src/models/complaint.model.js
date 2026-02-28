@@ -51,6 +51,7 @@ async function listForHrQueue() {
     `SELECT
       c.*,
       hu.name AS assigned_hr_name,
+      au.credibility_score,
       COALESCE(c.workflow_status::text, CASE
         WHEN c.status = 'under_review' THEN 'under_review'
         WHEN c.status = 'resolved' THEN 'resolved'
@@ -60,6 +61,7 @@ async function listForHrQueue() {
       END) AS workflow_status_resolved
      FROM complaints c
      LEFT JOIN hr_users hu ON hu.id = c.assigned_hr_id
+     LEFT JOIN anonymous_users au ON au.id = c.anon_user_id
      WHERE c.status NOT IN ('resolved', 'rejected')
      ORDER BY c.created_at DESC`
   );
@@ -71,6 +73,7 @@ async function listResolvedHistoryForHr(hrUserId) {
     `SELECT
       c.*,
       hu.name AS assigned_hr_name,
+      au.credibility_score,
       COALESCE(c.workflow_status::text, CASE
         WHEN c.status = 'under_review' THEN 'under_review'
         WHEN c.status = 'resolved' THEN 'resolved'
@@ -80,6 +83,7 @@ async function listResolvedHistoryForHr(hrUserId) {
       END) AS workflow_status_resolved
      FROM complaints c
      LEFT JOIN hr_users hu ON hu.id = c.assigned_hr_id
+     LEFT JOIN anonymous_users au ON au.id = c.anon_user_id
      WHERE c.assigned_hr_id = $1
        AND c.status IN ('resolved', 'rejected')
      ORDER BY c.updated_at DESC, c.created_at DESC`,

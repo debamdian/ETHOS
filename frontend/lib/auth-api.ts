@@ -71,6 +71,7 @@ export type ComplaintRecord = {
   display_status?: "pending" | "resolved" | "rejected";
   rejection_type?: "insufficient" | "false" | "malicious" | null;
   severity_score: number;
+  credibility_score?: number;
   created_at: string;
   updated_at: string;
 };

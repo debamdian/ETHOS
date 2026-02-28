@@ -6,9 +6,10 @@ const generateAnonUsername = require('../utils/generateAnonUsername');
 const mockDataLoader = require('../utils/mockDataLoader');
 const { ApiError } = require('../middlewares/error.middleware');
 const { logAuditEvent } = require('../services/audit.service');
+const { sendHrOtpEmail } = require('../services/email.service');
 
 const hrOtpChallenges = new Map();
-const HR_OTP_TTL_MS = 5 * 60 * 1000;
+const HR_OTP_TTL_MS = 10 * 60 * 1000;
 const HR_OTP_MAX_ATTEMPTS = 5;
 
 function hashOtp(otp) {
@@ -31,9 +32,8 @@ function createHrOtpChallenge(user) {
 }
 
 function getOtpPreviewPayload(otp) {
-  return process.env.NODE_ENV !== 'production' || process.env.HR_OTP_EXPOSE_IN_RESPONSE === 'true'
-    ? { otpPreview: otp }
-    : {};
+  const exposePreview = process.env.HR_OTP_EXPOSE_IN_RESPONSE === 'true' && process.env.NODE_ENV !== 'production';
+  return exposePreview ? { otpPreview: otp } : {};
 }
 
 function buildTokenPayload(user) {
@@ -206,6 +206,18 @@ async function hrLogin(req, res, next) {
     }
 
     const { challengeId, otp, expiresAt } = createHrOtpChallenge(user);
+
+    try {
+      await sendHrOtpEmail({
+        to: user.email,
+        otp,
+        expiresAt,
+        name: user.name,
+      });
+    } catch (emailError) {
+      hrOtpChallenges.delete(challengeId);
+      throw emailError;
+    }
 
     await logAuditEvent({
       actorUserId: user.id,
