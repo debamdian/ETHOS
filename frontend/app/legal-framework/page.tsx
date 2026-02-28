@@ -1,15 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import {
-  Bell,
-  BookOpen,
-  CheckCircle2,
-  ChevronRight,
-  FileText,
-  Gavel,
-  Scale,
-  ShieldCheck,
-} from "lucide-react";
+import { Bell, BookOpen, CheckCircle2, ChevronRight, FileText, Gavel, Scale, ShieldCheck } from "lucide-react";
 import { ModernBackground } from "@/components/modern-background";
 
 const legalPillars = [
@@ -65,7 +56,6 @@ export default async function LegalFrameworkPage() {
   const isAuthenticated = Boolean(authCookie);
   const portalHref = isAuthenticated ? (isHrUser ? "/hr/dashboard" : "/dashboard") : "/auth/login";
   const portalLabel = isAuthenticated ? (isHrUser ? "Go to HR Dashboard" : "Go to User Dashboard") : "Enter Portal";
-  const hrHref = isHrUser ? "/hr/dashboard" : "/hr/login";
 
   return (
     <div className="relative min-h-screen text-foreground transition-colors duration-500">
@@ -80,7 +70,6 @@ export default async function LegalFrameworkPage() {
             <nav className="hidden lg:flex items-center gap-10 text-[13px] font-bold uppercase tracking-widest text-muted-foreground/80">
               <Link href="/safety-guide" className="hover:text-primary transition-colors">Safety Guide</Link>
               <Link href="/legal-framework" className="text-primary transition-colors">Legal Framework</Link>
-              <Link href={hrHref} className="hover:text-primary transition-colors">For HR</Link>
             </nav>
             <div className="h-6 w-px bg-foreground/[0.08] hidden lg:block" />
             <Link
@@ -93,88 +82,91 @@ export default async function LegalFrameworkPage() {
         </div>
       </header>
 
-      <main className="pt-28 pb-24">
-        <section className="max-w-7xl mx-auto px-6 py-14 md:py-20">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-primary/[0.05] border border-primary/15 text-primary text-[11px] font-bold uppercase tracking-[0.2em] mb-8">
-            <Bell className="w-3.5 h-3.5" />
-            <span>Legal & Compliance Foundations</span>
-          </div>
+      <main className="pt-28 pb-28 space-y-16">
+        <section className="max-w-6xl mx-auto px-6">
+          <article className="rounded-[3rem] border border-foreground/[0.04] bg-background/70 glass p-10 md:p-20 text-center">
+            <div className="inline-flex items-center gap-2.5 px-6 py-2 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-[0.3em] mb-6">
+              <Bell className="w-3.5 h-3.5" />
+              Legal & Compliance Foundations
+            </div>
 
-          <h1 className="text-4xl md:text-7xl font-extrabold tracking-[-0.04em] leading-[1.05] max-w-5xl text-balance">
-            Legal Framework for
-            <span className="text-gradient"> protected reporting.</span>
-          </h1>
+            <h1 className="text-4xl md:text-7xl font-black tracking-[-0.035em] leading-tight text-balance">
+              Legal Framework for protected reporting.
+            </h1>
 
-          <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed font-medium">
-            A practical baseline for lawful, fair, and confidential handling of reports. Use this framework to keep
-            each case review structured, defensible, and policy-aligned.
-          </p>
+            <p className="mt-8 text-lg md:text-2xl text-muted-foreground leading-relaxed font-medium max-w-4xl mx-auto">
+              A practical baseline for lawful, fair, and confidential handling of reports. Use this framework to keep each case review structured, defensible, and policy-aligned.
+            </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-4">
-            <Link
-              href="/dashboard/file-complaint"
-              className="group w-full sm:w-auto bg-primary hover:bg-primary/95 text-white px-8 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all hover:translate-y-[-2px] shadow-xl shadow-primary/20"
-            >
-              File Complaint
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link
-              href="/safety-guide"
-              className="w-full sm:w-auto glass bg-card/30 hover:bg-card/50 px-8 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all border border-foreground/[0.06]"
-            >
-              Open Safety Guide
-            </Link>
-          </div>
+            <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard/file-complaint"
+                className="group w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-bold text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 shadow-2xl shadow-primary/30"
+              >
+                File Complaint
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
+                href="/safety-guide"
+                className="w-full sm:w-auto border border-foreground/[0.08] bg-card/40 hover:bg-card/60 px-10 py-5 rounded-2xl font-bold text-sm uppercase tracking-[0.3em] transition-all"
+              >
+                Open Safety Guide
+              </Link>
+            </div>
+          </article>
         </section>
 
-        <section className="max-w-7xl mx-auto px-6 pb-14">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 rounded-[2rem] p-2 glass bg-white/[0.02] border border-foreground/[0.04]">
-            {legalPillars.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article
-                  key={item.title}
-                  className="p-8 md:p-10 rounded-[1.5rem] bg-background/40 border border-foreground/[0.04] hover:bg-background/60 transition-colors"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-6 text-primary">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h2 className="text-xl font-extrabold tracking-tight mb-3">{item.title}</h2>
-                  <p className="text-muted-foreground text-[15px] leading-relaxed font-medium">{item.description}</p>
-                </article>
-              );
-            })}
+        <section className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col gap-6">
+            <div className="rounded-[2.5rem] border border-foreground/[0.04] bg-white/[0.02] glass p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.45em] text-muted-foreground">Compliance anchors</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              {legalPillars.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <article
+                    key={item.title}
+                    className="rounded-[1.75rem] border border-foreground/[0.05] bg-background/60 p-8 hover:-translate-y-1 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-6 text-primary">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-xl font-extrabold tracking-tight mb-3">{item.title}</h2>
+                    <p className="text-muted-foreground text-[15px] leading-relaxed font-medium">{item.description}</p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 
         <section className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <article className="lg:col-span-3 rounded-[2rem] p-8 md:p-10 border border-foreground/[0.04] bg-linear-to-br from-primary/[0.06] to-accent/[0.03]">
+            <article className="lg:col-span-3 rounded-[2.5rem] border border-accent/15 bg-linear-to-br from-primary/5 via-background/40 to-accent/5 p-10">
               <div className="inline-flex items-center gap-2 text-primary font-black text-[11px] uppercase tracking-[0.22em] mb-6">
                 <BookOpen className="w-4 h-4" />
                 Case handling checklist
               </div>
 
-              <ul className="space-y-4">
+              <ol className="space-y-5 list-decimal pl-5 marker:text-primary marker:font-black">
                 {frameworkChecklist.map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-[15px] md:text-base font-medium leading-relaxed">
-                    <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
-                    <span>{item}</span>
+                  <li key={item} className="text-[15px] md:text-base font-medium leading-relaxed text-muted-foreground">
+                    {item}
                   </li>
                 ))}
-              </ul>
+              </ol>
             </article>
 
-            <article className="lg:col-span-2 rounded-[2rem] p-8 md:p-10 border border-foreground/[0.04] glass bg-card/40">
+            <article className="lg:col-span-2 rounded-[2.5rem] border border-foreground/[0.04] glass bg-card/40 p-10">
               <h3 className="text-2xl font-black tracking-tight mb-4">Jurisdiction note</h3>
               <p className="text-muted-foreground font-medium leading-relaxed mb-8">
-                This page provides a general operational framework, not legal advice. Organization policies and local
-                law may impose additional requirements.
+                This framework reinforces consistent intake, but local legislation and collective agreements may change consent, retention, or disclosure requirements. Validate obligations with counsel before cross-border sharing.
               </p>
 
               <Link
                 href="/auth/login"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-foreground text-background font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-foreground text-background font-bold text-xs uppercase tracking-[0.3em] hover:opacity-90 transition-opacity"
               >
                 Continue to secure access
                 <ChevronRight className="w-4 h-4" />

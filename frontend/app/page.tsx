@@ -49,7 +49,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="pb-40">
+      <main className="pb-24">
         <section className="w-full relative pt-20 overflow-hidden bg-background min-h-[calc(100svh-5rem)] flex items-center">
           <Grainient
             color1="#9ea1ff"
@@ -77,63 +77,61 @@ export default function LandingPage() {
             className="opacity-50"
           />
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10 py-16 md:py-20">
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-primary/[0.03] border border-primary/10 text-primary text-[11px] font-bold uppercase tracking-[0.2em] mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-primary/[0.05] border border-primary/15 text-primary text-[11px] font-bold uppercase tracking-[0.2em] mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
               <Fingerprint className="w-3.5 h-3.5" />
-              <span>Institutional Trust Framework</span>
+              <span>Anonymous reporting made simple</span>
             </div>
 
-            <h1 className="text-5xl md:text-8xl font-extrabold tracking-[-0.04em] mb-10 leading-[1.1] text-balance max-w-5xl mx-auto">
-              Integrity by design. <br />
-              <span className="text-gradient">Technical certainty.</span>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-[-0.03em] mb-8 leading-[1.1] text-balance max-w-4xl mx-auto">
+              Simple, safe anonymous reporting for every workplace.
             </h1>
 
-            <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-16 leading-relaxed font-medium tracking-tight opacity-90">
-              The secure infrastructure for anonymous institutional disclosure.
-              Protecting identity through cryptographic isolation.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-14 leading-relaxed font-medium tracking-tight opacity-90">
+              ETHOS gives employees a calm place to share concerns, and gives HR a clear view of every case without exposing an identity. Encryption, workflows, and follow-ups are baked in—no extra tools required.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <button className="group w-full sm:w-auto bg-primary hover:bg-primary/95 text-white px-10 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:translate-y-[-2px] shadow-2xl shadow-primary/20">
-                Submit Secure Report <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <button className="group w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-semibold text-sm uppercase tracking-[0.25em] flex items-center justify-center gap-3 transition-all hover:translate-y-[-2px] shadow-2xl shadow-primary/20">
+                Start Secure Report <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="w-full sm:w-auto glass bg-card/10 hover:bg-card/30 px-10 py-5 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all border border-foreground/[0.03]">
-                Privacy Protocol
+              <button className="w-full sm:w-auto glass bg-card/10 hover:bg-card/20 px-10 py-5 rounded-2xl font-semibold text-sm uppercase tracking-[0.25em] transition-all border border-foreground/[0.05]">
+                Watch Product Tour
               </button>
             </div>
           </div>
         </section>
 
         {/* Section 2: Architecture & Analysis Section */}
-        <section className="w-full relative py-32 md:py-48 bg-foreground/[0.01] border-y border-foreground/[0.02]">
+        <section className="w-full relative py-20 md:py-28 bg-foreground/[0.01] border-y border-foreground/[0.02]">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-1 px-1 rounded-[40px] glass bg-white/[0.02] overflow-hidden">
-              <div className="p-12 text-left hover:bg-white/[0.03] transition-colors group cursor-default">
+              <div className="p-12 text-left hover:bg-white/[0.04] transition-colors group cursor-default">
                 <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center mb-10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                   <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Post-Metadata Architecture</h3>
+                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Identity stays private</h3>
                 <p className="text-muted-foreground leading-relaxed text-[15px] font-medium opacity-80">
-                  Our servers physically cannot store IP addresses, device IDs, or behavioral metadata.
+                  Device data, IP addresses, and personal identifiers are stripped before a report reaches our database.
                 </p>
               </div>
 
-              <div className="p-12 text-left border-y md:border-y-0 md:border-x border-foreground/[0.03] hover:bg-white/[0.03] transition-colors group cursor-default">
+              <div className="p-12 text-left border-y md:border-y-0 md:border-x border-foreground/[0.03] hover:bg-white/[0.04] transition-colors group cursor-default">
                 <div className="w-14 h-14 rounded-2xl bg-accent/5 border border-accent/10 flex items-center justify-center mb-10 group-hover:bg-accent group-hover:text-white transition-all duration-300">
                   <EyeOff className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Zero-Trace Analysis</h3>
+                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Clean, guided reviews</h3>
                 <p className="text-muted-foreground leading-relaxed text-[15px] font-medium opacity-80">
-                  Reports are processed in volatile memory environments and destroyed immediately after encryption.
+                  HR sees the facts, next steps, and policy checks in one panel. Nothing is stored longer than needed.
                 </p>
               </div>
 
-              <div className="p-12 text-left hover:bg-white/[0.03] transition-colors group cursor-default">
+              <div className="p-12 text-left hover:bg-white/[0.04] transition-colors group cursor-default">
                 <div className="w-14 h-14 rounded-2xl bg-success/5 border border-success/10 flex items-center justify-center mb-10 group-hover:bg-success group-hover:text-white transition-all duration-300">
                   <Scale className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Regulatory Compliance</h3>
+                <h3 className="text-lg font-bold uppercase tracking-widest mb-4">Compliance built in</h3>
                 <p className="text-muted-foreground leading-relaxed text-[15px] font-medium opacity-80">
-                  Compliant with global whistleblower protections including EU 2019/1937 and US Sarbanes-Oxley.
+                  Every workflow maps to EU 2019/1937, SOX, and local whistleblower rules with live audit evidence.
                 </p>
               </div>
             </div>
@@ -141,7 +139,7 @@ export default function LandingPage() {
         </section>
 
         {/* Professional Guarantee Section */}
-        <section className="px-6 mb-48">
+        <section className="px-6 mb-32">
           <div className="max-w-6xl mx-auto glass p-10 md:p-20 rounded-[4rem] bg-linear-to-br from-primary/[0.02] to-accent/[0.02] border border-foreground/[0.03] relative overflow-hidden group">
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-16 md:gap-24">
               <div className="text-center md:text-left flex-1">
@@ -149,9 +147,9 @@ export default function LandingPage() {
                   <CheckCircle2 className="w-5 h-5" />
                   Legal Audit Certified
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-8">The Professional Guarantee.</h2>
-                <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-xl italic">
-                  &ldquo;ETHOS is the only platform we&apos;ve audited that provides true technical isolation of identity rather than just policy-based promises.&rdquo;
+                <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-8">Built for legal teams, trusted by people teams.</h2>
+                <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed max-w-xl">
+                  “ETHOS is the only platform we’ve audited that protects identity in hardware and software, not just policy.”
                 </p>
                 <div className="mt-8 flex items-center gap-4">
                   <div className="w-12 h-12 bg-zinc-200 dark:bg-zinc-800 rounded-full" />
@@ -167,21 +165,21 @@ export default function LandingPage() {
                   <Zap className="text-primary w-8 h-8" />
                   <div>
                     <p className="text-2xl font-black">2.4ms</p>
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">Avg. Encryption Time</p>
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">Average encryption time</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
                   <Shield className="text-accent w-8 h-8" />
                   <div>
-                    <p className="text-2xl font-black">256-Bit</p>
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">RSA Neural Hashing</p>
+                    <p className="text-2xl font-black">256-bit</p>
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">Key split per report</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
                   <MessageSquare className="text-success w-8 h-8" />
                   <div>
                     <p className="text-2xl font-black">100%</p>
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">Anonymous Uptime</p>
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-60">Anonymous uptime</p>
                   </div>
                 </div>
               </div>
@@ -190,24 +188,24 @@ export default function LandingPage() {
         </section>
 
         {/* Restructured Steps Section */}
-        <section className="max-w-6xl mx-auto px-6 mb-48">
+        <section className="max-w-6xl mx-auto px-6 mb-32">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-24 relative">
             <div className="group flex flex-col items-start">
               <span className="text-6xl font-black text-foreground/5 mb-8 group-hover:text-primary/10 transition-colors">01</span>
-              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Disclosure</h3>
-              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">Capture findings in our secure workspace. All evidence is automatically sanitized and encrypted.</p>
+              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Report</h3>
+              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">Employees answer plain-language prompts, attach context, and send everything through an encrypted channel.</p>
             </div>
 
             <div className="group flex flex-col items-start">
               <span className="text-6xl font-black text-foreground/5 mb-8 group-hover:text-accent/10 transition-colors">02</span>
-              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Shielding</h3>
-              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">Our Neutrality Core processes the report, stripping all identifiers and creating a unique access key.</p>
+              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Review</h3>
+              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">ETHOS removes identifiers, applies policy checks, and routes the case to the right HR and legal owners.</p>
             </div>
 
             <div className="group flex flex-col items-start">
               <span className="text-6xl font-black text-foreground/5 mb-8 group-hover:text-success/10 transition-colors">03</span>
-              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Resolution</h3>
-              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">Engage with investigators via protected channels. Your safety is maintained throughout the case lifecycle.</p>
+              <h3 className="text-2xl font-extrabold mb-4 uppercase tracking-tight">Resolve</h3>
+              <p className="text-muted-foreground font-medium text-[15px] leading-relaxed">Investigators keep the dialogue going through protected threads while automated reminders track follow-ups.</p>
             </div>
           </div>
         </section>
@@ -220,22 +218,24 @@ export default function LandingPage() {
             </div>
 
             <div className="relative z-10">
-              <h2 className="text-5xl md:text-8xl font-black mb-12 tracking-tighter italic">
-                INTEGRITY WITHOUT <br />
-                <span className="text-primary italic">EXTINGUISHMENT.</span>
+              <h2 className="text-4xl md:text-6xl font-black mb-10 tracking-tight">
+                Roll out ETHOS without disrupting your tools.
               </h2>
-              <button className="bg-white text-black px-16 py-7 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5">
-                Join the Network
+              <p className="mx-auto max-w-2xl text-base text-white/70 mb-10">
+                We connect to your identity provider, sync policies, and guide your first admins in a single afternoon. No rip-and-replace required.
+              </p>
+              <button className="bg-white text-black px-16 py-5 rounded-2xl font-semibold text-sm uppercase tracking-[0.25em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10">
+                See ETHOS in action
               </button>
-              <div className="mt-16 text-[9px] uppercase font-bold tracking-[0.6em] opacity-30">
-                End-to-End Encryption [ACTIVE] | Identity Cloaking [ACTIVE]
+              <div className="mt-12 text-[10px] uppercase font-bold tracking-[0.5em] opacity-40">
+                Encryption ready · Identity shield on
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-foreground/[0.03] py-24 bg-background/50 relative overflow-hidden mt-40">
+      <footer className="border-t border-foreground/[0.03] py-16 bg-background/50 relative overflow-hidden mt-24">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 gap-16 md:grid-cols-2 mb-24">
             <div>
@@ -255,12 +255,12 @@ export default function LandingPage() {
             </div>
             <div className="rounded-[34px] border border-foreground/5 bg-gradient-to-br from-white/60 via-primary/5 to-accent/5 p-10 text-left shadow-[0_25px_90px_rgba(15,23,42,0.08)] dark:from-foreground/10 dark:via-primary/10 dark:to-accent/10">
               <p className="text-xs font-semibold uppercase tracking-[0.45em] text-muted-foreground">Stay aligned</p>
-              <h3 className="mt-4 text-2xl font-semibold text-foreground">Weekly Privacy Briefings</h3>
+              <h3 className="mt-4 text-2xl font-semibold text-foreground">Weekly privacy briefings</h3>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Get a concise signal on regulatory shifts, ETHOS capabilities, and ready-to-use trust playbooks—never noise, never spam.
+                Quick updates on regulations, ETHOS releases, and trust playbooks you can use immediately.
               </p>
               <button className="mt-6 inline-flex items-center justify-center rounded-full bg-primary/90 px-6 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-primary">
-                Join list
+                Send me the brief
               </button>
             </div>
           </div>
