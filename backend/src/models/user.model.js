@@ -111,8 +111,8 @@ async function updateAnonPassword(id, password_hash) {
 async function adjustAnonCredibility(id, delta) {
   const result = await query(
     `UPDATE anonymous_users
-     SET credibility_score = LEAST(200, GREATEST(0, COALESCE(credibility_score, 100) + $2)),
-         trust_flag = LEAST(200, GREATEST(0, COALESCE(credibility_score, 100) + $2)) >= 70
+     SET credibility_score = LEAST(100, GREATEST(0, COALESCE(credibility_score, 100) + $2)),
+         trust_flag = LEAST(100, GREATEST(0, COALESCE(credibility_score, 100) + $2)) >= 70
      WHERE id = $1
      RETURNING id, credibility_score, trust_flag`,
     [id, delta]
