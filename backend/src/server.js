@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const app = require('./app');
 const logger = require('./utils/logger');
 const { initChatSocket } = require('./socket/chat.socket');
+const { ensureBootstrapHrUser } = require('./services/bootstrapHr.service');
 
 const PORT = Number(process.env.PORT || 5000);
 const clientOrigins = process.env.CLIENT_ORIGIN?.split(',') || ['http://localhost:3000'];
@@ -36,4 +37,10 @@ process.on('uncaughtException', (err) => {
 
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
+  ensureBootstrapHrUser().catch((err) => {
+    logger.error('Failed to ensure bootstrap HR user', {
+      message: err.message,
+      stack: err.stack,
+    });
+  });
 });

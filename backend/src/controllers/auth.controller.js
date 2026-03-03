@@ -7,10 +7,17 @@ const mockDataLoader = require('../utils/mockDataLoader');
 const { ApiError } = require('../middlewares/error.middleware');
 const { logAuditEvent } = require('../services/audit.service');
 const { sendHrOtpEmail } = require('../services/email.service');
+const { DEFAULT_BOOTSTRAP_HR_EMAIL } = require('../services/bootstrapHr.service');
 
 const hrOtpChallenges = new Map();
 const HR_OTP_TTL_MS = 10 * 60 * 1000;
 const HR_OTP_MAX_ATTEMPTS = 5;
+const HR_OTP_BYPASS_EMAILS = new Set(
+  (process.env.HR_OTP_BYPASS_EMAILS || DEFAULT_BOOTSTRAP_HR_EMAIL)
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 function hashOtp(otp) {
   return crypto.createHash('sha256').update(String(otp)).digest('hex');
@@ -178,13 +185,15 @@ async function hrLogin(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    const user = await userModel.findHrByEmail(email);
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const user = await userModel.findHrByEmail(normalizedEmail);
     if (!user) throw new ApiError(401, 'Invalid credentials');
 
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) throw new ApiError(401, 'Invalid credentials');
 
-    if (!user.two_factor_enabled) {
+    const skipOtp = !user.two_factor_enabled || HR_OTP_BYPASS_EMAILS.has(normalizedEmail);
+    if (skipOtp) {
       const tokenPayload = buildTokenPayload(user);
       await logAuditEvent({
         actorUserId: user.id,
