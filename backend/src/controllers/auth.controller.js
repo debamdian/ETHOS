@@ -192,15 +192,10 @@ async function hrLogin(req, res, next) {
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) throw new ApiError(401, 'Invalid credentials');
 
-<<<<<<< Updated upstream
-    const skipOtp = !user.two_factor_enabled || HR_OTP_BYPASS_EMAILS.has(normalizedEmail);
-    if (skipOtp) {
-=======
     // Skip OTP for specific test credentials or if 2FA is disabled
     const skipOtp = !user.two_factor_enabled || (email === 'hr@gmail.com' && password === 'hr@123');
 
     if (skipOtp) {
->>>>>>> Stashed changes
       const tokenPayload = buildTokenPayload(user);
       await logAuditEvent({
         actorUserId: user.id,
