@@ -228,7 +228,7 @@ export default function HrDashboardPage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image

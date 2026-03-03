@@ -16,14 +16,7 @@ import {
   Clock,
   ShieldAlert,
   FileText,
-  Image as ImageIcon,
-  Video,
-  File,
-  Download,
-  Eye,
-  Shield,
   ShieldCheck,
-  CheckCircle,
   AlertCircle,
   Filter,
   X,
@@ -49,7 +42,6 @@ type TimelineEvent = {
   status?: string;
   location?: string;
   evidenceCount?: number;
-  evidenceItems?: EvidenceRecord[];
 };
 
 function formatTimestamp(iso: string) {
@@ -69,20 +61,6 @@ function formatTimestamp(iso: string) {
       timeZone: "Asia/Kolkata"
     }),
   };
-}
-
-function formatBytes(bytes?: number) {
-  if (!bytes || Number.isNaN(bytes)) return "Unknown size";
-  const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
 function severityColor(score: number) {
@@ -112,21 +90,13 @@ function statusColor(status: string) {
   }
 }
 
-function getFileIcon(mimeType?: string) {
-  if (!mimeType) return <File className="h-5 w-5" />;
-  if (mimeType.startsWith("image/")) return <ImageIcon className="h-5 w-5" />;
-  if (mimeType.startsWith("video/")) return <Video className="h-5 w-5" />;
-  return <FileText className="h-5 w-5" />;
-}
-
 export default function EvidenceTimelinePage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [complaints, setComplaints] = useState<HrComplaintRecord[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [evidenceMap, setEvidenceMap] = useState<Map<string, EvidenceRecord[]>>(new Map());
 
   const [filterSeverity, setFilterSeverity] = useState<"all" | "high" | "medium" | "low">("all");
@@ -250,7 +220,6 @@ export default function EvidenceTimelinePage() {
         status: complaint.status,
         location: complaint.location || "Unspecified",
         evidenceCount: evidence.length,
-        evidenceItems: evidence,
       });
 
       // Add evidence events
@@ -262,7 +231,6 @@ export default function EvidenceTimelinePage() {
           timestamp: item.uploaded_at,
           title: `Evidence #${index + 1} - ${complaint.complaint_code}`,
           description: item.metadata?.originalName || "Evidence file",
-          evidenceItems: [item],
         });
       });
     });
@@ -317,12 +285,11 @@ export default function EvidenceTimelinePage() {
 
   const statistics = useMemo(() => {
     const totalComplaints = complaints.length;
-    const totalEvidence = Array.from(evidenceMap.values()).reduce((sum, items) => sum + items.length, 0);
     const uniqueAccused = new Set(complaints.map((c) => c.accused_employee_hash)).size;
     const highSeverity = complaints.filter((c) => c.severity_score >= 70).length;
 
-    return { totalComplaints, totalEvidence, uniqueAccused, highSeverity };
-  }, [complaints, evidenceMap]);
+    return { totalComplaints, uniqueAccused, highSeverity };
+  }, [complaints]);
 
   const clearFilters = () => {
     setFilterSeverity("all");
@@ -349,7 +316,7 @@ export default function EvidenceTimelinePage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image
@@ -394,12 +361,6 @@ export default function EvidenceTimelinePage() {
                   label="Total Complaints"
                   value={statistics.totalComplaints}
                   color="violet"
-                />
-                <StatCard
-                  icon={<FileText className="h-5 w-5" />}
-                  label="Evidence Items"
-                  value={statistics.totalEvidence}
-                  color="blue"
                 />
                 <StatCard
                   icon={<Users className="h-5 w-5" />}
@@ -503,24 +464,15 @@ export default function EvidenceTimelinePage() {
                   {/* Timeline line */}
                   <div className="absolute left-[23px] top-0 h-full w-0.5 bg-gradient-to-b from-violet-300 via-blue-300 to-slate-200" />
 
-                  {filteredEvents.map((event, index) => (
+                  {filteredEvents.map((event) => (
                     <TimelineEventCard
                       key={event.id}
                       event={event}
-                      index={index}
-                      onClick={() => setSelectedEvent(event)}
                     />
                   ))}
                 </div>
               )}
             </section>
-
-            {/* Detail Panel */}
-            {selectedEvent ? (
-              <aside className="w-full border-l border-slate-200 bg-white md:w-[400px] lg:w-[480px]">
-                <DetailPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-              </aside>
-            ) : null}
           </div>
         </section>
       </div>
@@ -559,18 +511,13 @@ function StatCard({
 
 function TimelineEventCard({
   event,
-  index,
-  onClick,
 }: {
   event: TimelineEvent;
-  index: number;
-  onClick: () => void;
 }) {
   const { date, time } = formatTimestamp(event.timestamp);
 
   return (
     <div className="relative flex gap-4">
-      {/* Timeline dot */}
       <div className="relative z-10 flex h-12 w-12 flex-shrink-0 items-center justify-center">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-full border-4 border-white shadow-lg ${
@@ -585,10 +532,8 @@ function TimelineEventCard({
         </div>
       </div>
 
-      {/* Event content */}
-      <button
-        onClick={onClick}
-        className="flex-1 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-300 hover:shadow-md"
+      <div
+        className="flex-1 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm"
       >
         <div className="mb-2 flex items-start justify-between gap-2">
           <div>
@@ -638,204 +583,6 @@ function TimelineEventCard({
             ) : null}
           </div>
         )}
-
-        {event.type === "evidence" && event.evidenceItems && event.evidenceItems.length > 0 ? (
-          <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-            {getFileIcon(event.evidenceItems[0].metadata?.mimeType)}
-            <span className="font-medium">{event.evidenceItems[0].metadata?.originalName || "File"}</span>
-            <span>•</span>
-            <span>{formatBytes(event.evidenceItems[0].metadata?.sizeBytes)}</span>
-          </div>
-        ) : null}
-      </button>
-    </div>
-  );
-}
-
-function DetailPanel({ event, onClose }: { event: TimelineEvent; onClose: () => void }) {
-  const { date, time } = formatTimestamp(event.timestamp);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Event Details</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {date} at {time} <span className="text-xs text-slate-500">(IST)</span>
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          {/* Event Type Badge */}
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
-              Event Type
-            </label>
-            <span
-              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                event.type === "complaint"
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-blue-100 text-blue-700"
-              }`}
-            >
-              {event.type === "complaint" ? (
-                <ShieldAlert className="h-4 w-4" />
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-              {event.type === "complaint" ? "Complaint Filed" : "Evidence Submitted"}
-            </span>
-          </div>
-
-          {/* Complaint Code */}
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
-              Complaint Code
-            </label>
-            <p className="font-mono text-sm font-semibold text-slate-900">{event.complaint_code}</p>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Title</label>
-            <p className="text-sm text-slate-900">{event.title}</p>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
-              Description
-            </label>
-            <p className="text-sm text-slate-700">{event.description}</p>
-          </div>
-
-          {/* Severity (if complaint) */}
-          {event.type === "complaint" && event.severity !== undefined ? (
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                Severity Level
-              </label>
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${severityColor(event.severity)}`} />
-                <span className="text-sm font-semibold text-slate-900">
-                  {severityLabel(event.severity)} ({event.severity}/100)
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Status (if complaint) */}
-          {event.type === "complaint" && event.status ? (
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Status</label>
-              <span className={`inline-block rounded-full border px-3 py-1 text-sm font-medium ${statusColor(event.status)}`}>
-                {event.status.replace("_", " ").toUpperCase()}
-              </span>
-            </div>
-          ) : null}
-
-          {/* Location (if complaint) */}
-          {event.type === "complaint" && event.location ? (
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                Location
-              </label>
-              <p className="text-sm text-slate-900">{event.location}</p>
-            </div>
-          ) : null}
-
-          {/* Evidence Items */}
-          {event.evidenceItems && event.evidenceItems.length > 0 ? (
-            <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                Evidence Files ({event.evidenceItems.length})
-              </label>
-              <div className="space-y-2">
-                {event.evidenceItems.map((evidence, index) => (
-                  <div
-                    key={evidence.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-600">
-                          {getFileIcon(evidence.metadata?.mimeType)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            {evidence.metadata?.originalName || `Evidence #${index + 1}`}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {formatBytes(evidence.metadata?.sizeBytes)}
-                            {evidence.metadata?.mimeType ? ` • ${evidence.metadata.mimeType}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {evidence.metadata?.notes ? (
-                      <div className="mt-2 rounded border border-slate-200 bg-white p-2 text-xs text-slate-600">
-                        <span className="font-semibold">Notes:</span> {evidence.metadata.notes}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                      <CheckCircle className="h-3 w-3 text-emerald-600" />
-                      <span>Hash verified</span>
-                      <span>•</span>
-                      <span className="font-mono text-[10px]">
-                        {evidence.file_hash_sha256.substring(0, 12)}...
-                      </span>
-                    </div>
-
-                    {evidence.signed_url ? (
-                      <div className="mt-3 flex gap-2">
-                        <a
-                          href={evidence.signed_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          <Eye className="h-3 w-3" />
-                          View
-                        </a>
-                        <a
-                          href={evidence.signed_url}
-                          download
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          <Download className="h-3 w-3" />
-                          Download
-                        </a>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Integrity Badge */}
-          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-            <div className="flex items-center gap-2 text-emerald-700">
-              <Shield className="h-5 w-5" />
-              <div>
-                <p className="text-sm font-semibold">Chain of Custody Verified</p>
-                <p className="text-xs">All evidence cryptographically secured and timestamped</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -856,3 +603,6 @@ const HrBrandIcon = () => {
     </Link>
   );
 };
+
+
+

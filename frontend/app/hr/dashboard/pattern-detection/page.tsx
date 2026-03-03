@@ -129,7 +129,7 @@ function complaintStatusClass(status: AccusedComplaintRecord["status"]) {
 
 export default function HrPatternDetectionPage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -451,7 +451,7 @@ export default function HrPatternDetectionPage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image

@@ -43,7 +43,7 @@ function actionLabel(actionType: ComplaintAuditLogRecord["action_type"]) {
 
 export default function HrLogsPage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [logs, setLogs] = useState<ComplaintAuditLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,7 +191,7 @@ export default function HrLogsPage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image

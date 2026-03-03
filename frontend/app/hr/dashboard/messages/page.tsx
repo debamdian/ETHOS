@@ -108,7 +108,7 @@ function toAdjustedDate(isoDate: string) {
 
 export default function HrMessagesPage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [requestedComplaintCode, setRequestedComplaintCode] = useState("");
 
   const [filter, setFilter] = useState<"Active" | "Closed">("Active");
@@ -556,7 +556,7 @@ export default function HrMessagesPage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image

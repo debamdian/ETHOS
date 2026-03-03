@@ -110,7 +110,7 @@ function formatBytes(value?: number) {
 
 export default function HrQueuePage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [queue, setQueue] = useState<HrQueueRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -539,7 +539,7 @@ export default function HrQueuePage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image

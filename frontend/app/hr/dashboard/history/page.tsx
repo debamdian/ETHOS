@@ -52,7 +52,7 @@ function formatDate(value: string | null) {
 
 export default function HrHistoryPage() {
   const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [historyRows, setHistoryRows] = useState<HrQueueRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,7 +174,7 @@ export default function HrHistoryPage() {
             </div>
             <SidebarLink
               link={{
-                label: "HR Manager",
+                label: user?.name || user?.email || "HR Manager",
                 href: "/hr/dashboard",
                 icon: (
                   <Image
